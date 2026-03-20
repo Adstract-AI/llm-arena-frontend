@@ -5,4 +5,11 @@ export interface ArenaRound {
   prompt: string
   answerA: string
   answerB: string
+  modelAName: string
+  modelBName: string
+}
+
+export interface VoteOutcome {
+  winner: 'modelA' | 'modelB' | 'tie'
+  message: string
 }
