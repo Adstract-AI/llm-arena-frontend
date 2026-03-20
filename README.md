@@ -67,7 +67,7 @@ src/
 - `app`: app-level shell and centralized route registration.
 - `features`: product areas grouped by domain (home, arena, settings).
 - `shared`: reusable cross-feature configuration, network, UI, and utilities.
-- Detailed developer guidelines: [FRONTEND_GUIDELINES.md](./FRONTEND_GUIDELINES.md)
+- Detailed developer guidelines: [FRONTEND_GUIDELINES.md](agents_metadata/FRONTEND_GUIDELINES.md)
 
 ## Architecture Rules
 - UI components call feature API modules, not raw HTTP clients directly.

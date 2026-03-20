@@ -44,7 +44,14 @@ export function AppLayout() {
       <header className="topbar">
         <div className="topbar__inner">
           <Link to="/" className="brand" aria-label="MakArena home">
-            MakArena
+            <img
+              src="/logo.png"
+              alt=""
+              className="brand__logo"
+              width="72"
+              height="48"
+            />
+            <span className="brand__label">MakArena</span>
           </Link>
 
           <div className="topbar__actions">

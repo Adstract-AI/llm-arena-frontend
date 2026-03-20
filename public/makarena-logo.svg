@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 200" role="img" aria-labelledby="logo-title">
+  <title id="logo-title">MakArena logo</title>
+  <defs>
+    <linearGradient id="rim" x1="38" x2="282" y1="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#191b27" />
+      <stop offset="0.5" stop-color="#474b59" />
+      <stop offset="1" stop-color="#191b27" />
+    </linearGradient>
+    <linearGradient id="rimGlow" x1="74" x2="246" y1="110" y2="132" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f7f8fd" />
+      <stop offset="0.55" stop-color="#d8ddeb" />
+      <stop offset="1" stop-color="#ffffff" />
+    </linearGradient>
+    <linearGradient id="leftRed" x1="110" x2="164" y1="36" y2="124" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#df1f27" />
+      <stop offset="0.45" stop-color="#ff2d22" />
+      <stop offset="1" stop-color="#990716" />
+    </linearGradient>
+    <linearGradient id="rightRed" x1="162" x2="220" y1="38" y2="126" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff5a2d" />
+      <stop offset="0.45" stop-color="#ff3524" />
+      <stop offset="1" stop-color="#9f0a1a" />
+    </linearGradient>
+    <linearGradient id="leftInset" x1="122" x2="170" y1="90" y2="138" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3a3f50" />
+      <stop offset="1" stop-color="#171a27" />
+    </linearGradient>
+    <linearGradient id="rightInset" x1="154" x2="208" y1="88" y2="142" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="1" stop-color="#b8bfd8" />
+    </linearGradient>
+    <radialGradient id="ball" cx="50%" cy="40%" r="60%">
+      <stop offset="0" stop-color="#ffd44f" />
+      <stop offset="0.55" stop-color="#ff8e22" />
+      <stop offset="1" stop-color="#e4262f" />
+    </radialGradient>
+  </defs>
+
+  <ellipse cx="160" cy="132" rx="138" ry="37" fill="#0d0f17" opacity="0.3" />
+  <ellipse cx="160" cy="128" rx="124" ry="34" fill="url(#rim)" />
+  <ellipse cx="160" cy="128" rx="92" ry="23" fill="url(#rimGlow)" />
+
+  <g transform="rotate(-10 122 84)">
+    <rect x="96" y="34" width="90" height="92" rx="18" fill="url(#leftRed)" />
+    <path
+      d="M150 82c-20 7-37 16-54 28l38 32-6-24 31-11-9-25Z"
+      fill="url(#leftInset)"
+    />
+  </g>
+
+  <g transform="rotate(10 198 84)">
+    <rect x="134" y="34" width="90" height="92" rx="18" fill="url(#rightRed)" />
+    <path
+      d="M149 80c24 9 43 18 59 30l-39 32 7-24-32-11 5-27Z"
+      fill="url(#rightInset)"
+    />
+  </g>
+
+  <circle cx="160" cy="74" r="10" fill="url(#ball)" />
+</svg>
