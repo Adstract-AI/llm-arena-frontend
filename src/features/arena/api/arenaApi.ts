@@ -43,26 +43,26 @@ export async function submitVote(
   if (vote === 'modelA') {
     return {
       winner: 'modelA',
-      message: 'Thank you for voting. Model A took this round.',
+      message: 'Answer 1 wins this round.',
     }
   }
 
   if (vote === 'modelB') {
     return {
       winner: 'modelB',
-      message: 'Thank you for voting. Model B took this round.',
+      message: 'Answer 2 wins this round.',
     }
   }
 
   if (vote === 'bothGood') {
     return {
       winner: 'tie',
-      message: 'Thank you. You marked both responses as strong.',
+      message: 'Both answers were marked as good.',
     }
   }
 
   return {
     winner: 'tie',
-    message: 'Thank you. You marked both responses as weak.',
+    message: 'Both answers were marked as not good.',
   }
 }

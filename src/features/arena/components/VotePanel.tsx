@@ -20,9 +20,16 @@ export function VotePanel({
   onSubmitVote,
   disabled,
 }: VotePanelProps) {
+  const selectedLabel =
+    options.find((option) => option.value === selectedVote)?.label ?? 'No option selected'
+
   return (
     <section className="vote-panel" aria-label="Vote for best response">
-      <h3>Cast your vote</h3>
+      <div className="vote-panel__header">
+        <h3>Choose the better response</h3>
+        <p className="vote-panel__hint">Current selection: {selectedLabel}</p>
+      </div>
+
       <div className="vote-panel__grid">
         {options.map((option) => (
           <button
@@ -37,14 +44,17 @@ export function VotePanel({
           </button>
         ))}
       </div>
-      <button
-        type="button"
-        className="btn btn--primary"
-        onClick={() => void onSubmitVote()}
-        disabled={disabled || !selectedVote}
-      >
-        Submit Vote
-      </button>
+
+      <div className="vote-panel__footer">
+        <button
+          type="button"
+          className="btn btn--primary vote-panel__submit"
+          onClick={() => void onSubmitVote()}
+          disabled={disabled || !selectedVote}
+        >
+          Submit Vote
+        </button>
+      </div>
     </section>
   )
 }

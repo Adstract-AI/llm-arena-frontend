@@ -26,7 +26,7 @@ export function ArenaPage() {
       return round.modelBName
     }
 
-    return 'Tie'
+    return 'Tie (no single winner)'
   }, [round, voteOutcome])
 
   async function handlePromptSubmit(prompt: string) {
@@ -145,15 +145,25 @@ export function ArenaPage() {
             />
           ) : (
             <section className="result-card" aria-live="polite">
-              <p className="eyebrow">Vote recorded</p>
-              <h3>{voteOutcome.message || 'Thank you for your vote.'}</h3>
-              <p>
-                Winner: <strong>{winnerLabel}</strong>
-              </p>
-              <p>
-                Answer 1: <strong>{round.modelAName}</strong> | Answer 2:{' '}
-                <strong>{round.modelBName}</strong>
-              </p>
+              <p className="result-card__kicker">Round complete</p>
+              <h3>Thanks, your vote has been counted.</h3>
+              <p className="result-card__summary">{voteOutcome.message}</p>
+
+              <div className="result-card__grid">
+                <article className="result-chip">
+                  <span className="result-chip__label">Your Vote</span>
+                  <strong>{winnerLabel}</strong>
+                </article>
+                <article className="result-chip">
+                  <span className="result-chip__label">Answer 1 model</span>
+                  <strong>{round.modelAName}</strong>
+                </article>
+                <article className="result-chip">
+                  <span className="result-chip__label">Answer 2 model</span>
+                  <strong>{round.modelBName}</strong>
+                </article>
+              </div>
+
               <button type="button" className="btn btn--primary" onClick={resetRound}>
                 Start New Chat
               </button>
