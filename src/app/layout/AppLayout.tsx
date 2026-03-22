@@ -26,6 +26,8 @@ function getInitialTheme(): Theme {
 
 export function AppLayout() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
+  const logoSrc =
+    theme === 'dark' ? '/makarena_logo_black.png' : '/makarena_logo_green.png'
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -44,14 +46,9 @@ export function AppLayout() {
       <header className="topbar">
         <div className="topbar__inner">
           <Link to="/" className="brand" aria-label="MakArena home">
-            <img
-              src="/logo.png"
-              alt=""
-              className="brand__logo"
-              width="72"
-              height="48"
-            />
-            <span className="brand__label">MakArena</span>
+            <span className="brand__logo-frame">
+              <img src={logoSrc} alt="MakArena" className="brand__logo" />
+            </span>
           </Link>
 
           <div className="topbar__actions">

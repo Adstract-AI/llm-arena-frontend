@@ -1,41 +1,71 @@
 :root {
-  --graphite-50: #f8f8f9;
-  --graphite-100: #e4e5e9;
-  --graphite-200: #cfd2d9;
-  --graphite-300: #9ea4af;
-  --graphite-400: #727885;
-  --graphite-500: #4a4f5a;
-  --graphite-600: #2f3239;
-  --graphite-700: #1f2126;
-  --graphite-800: #15161a;
-  --graphite-900: #0f1013;
-  --graphite-950: #090a0c;
+  --tea-green-50: #ecfbea;
+  --tea-green-100: #d9f6d5;
+  --tea-green-200: #b3edab;
+  --tea-green-300: #8ce481;
+  --tea-green-400: #7de66f;
+  --tea-green-500: #3e603b;
+  --tea-green-600: #294323;
+  --tea-green-700: #7cdd6f;
+  --tea-green-800: #1a5412;
+  --tea-green-900: #0d2a09;
+  --tea-green-950: #091d06;
 
-  --crimson-300: #ff8a9b;
-  --crimson-400: #ff6279;
-  --crimson-500: #ff425e;
-  --crimson-600: #df2445;
-  --crimson-700: #b3122a;
+  --muted-teal-50: #f1f4f3;
+  --muted-teal-100: #e3e8e7;
+  --muted-teal-200: #c6d2ce;
+  --muted-teal-300: #aabbb6;
+  --muted-teal-400: #8ea49d;
+  --muted-teal-500: #718e85;
+  --muted-teal-600: #5b716a;
+  --muted-teal-700: #445550;
+  --muted-teal-800: #2d3935;
+  --muted-teal-900: #171c1b;
+  --muted-teal-950: #101413;
+
+  --blue-slate-50: #f0f1f5;
+  --blue-slate-100: #e1e3ea;
+  --blue-slate-200: #c3c7d5;
+  --blue-slate-300: #a5acc0;
+  --blue-slate-400: #8790ab;
+  --blue-slate-500: #697496;
+  --blue-slate-600: #545d78;
+  --blue-slate-700: #3f465a;
+  --blue-slate-800: #2a2e3c;
+  --blue-slate-900: #15171e;
+  --blue-slate-950: #0f1015;
+
+  --space-indigo-50: #ededf8;
+  --space-indigo-100: #dbdaf1;
+  --space-indigo-200: #b7b5e3;
+  --space-indigo-300: #9290d5;
+  --space-indigo-400: #6e6bc7;
+  --space-indigo-500: #4a46b9;
+  --space-indigo-600: #3b3894;
+  --space-indigo-700: #2c2a6f;
+  --space-indigo-800: #1e1c4a;
+  --space-indigo-900: #0f0e25;
+  --space-indigo-950: #0a0a1a;
 
   --bg-page:
-    radial-gradient(circle at 22% 16%, rgba(255, 255, 255, 0.04), transparent 30%),
-    radial-gradient(circle at 78% 20%, rgba(255, 66, 94, 0.12), transparent 34%),
-    linear-gradient(145deg, #2c2e35 0%, #1f2127 48%, #14161b 100%);
-  --bg-card: linear-gradient(165deg, rgba(44, 46, 53, 0.92), rgba(14, 14, 17, 0.97));
-  --line: rgba(255, 255, 255, 0.12);
-  --line-strong: rgba(255, 98, 121, 0.34);
-  --text-main: #fbfbfc;
-  --text-muted: #d7dae0;
-  --text-soft: #9ea4af;
-  --action: #ff4d67;
-  --action-strong: #ff7a8d;
-  --action-soft: rgba(255, 77, 103, 0.14);
-  --action-soft-strong: rgba(255, 77, 103, 0.22);
+    radial-gradient(circle at 22% 16%, rgba(113, 142, 133, 0.04), transparent 30%),
+    radial-gradient(circle at 78% 20%, rgba(113, 142, 133, 0.02), transparent 34%),
+    linear-gradient(145deg, #0a0d10 0%, #131618 48%, #0f1315 100%);
+  --bg-card: linear-gradient(165deg, rgba(22, 25, 28, 0.94), rgba(15, 19, 22, 0.98));
+  --line: rgba(113, 142, 133, 0.1);
+  --line-strong: rgba(113, 142, 133, 0.18);
+  --text-main: #f1f4f3;
+  --text-muted: #c6d2ce;
+  --text-soft: #8ea49d;
+  --action: #6fa372;
+  --action-strong: #81b381;
+  --action-soft: rgba(111, 163, 114, 0.1);
+  --action-soft-strong: rgba(111, 163, 114, 0.14);
   --action-ink: #ffffff;
-  --focus-ring: #ff7285;
-  --primary-btn-bg: linear-gradient(135deg, #ff5c72, #b3122a);
+  --focus-ring: rgba(129, 179, 129, 0.28);
+  --primary-btn-bg: linear-gradient(135deg, #81b381, #3d6843);
   --primary-btn-text: #ffffff;
-  --primary-btn-shadow: 0 16px 34px rgba(179, 18, 42, 0.34);
+  --primary-btn-shadow: 0 16px 34px rgba(61, 104, 67, 0.24);
 
   --font-display:
     'SF Pro Display',
@@ -59,53 +89,53 @@
   --chat-frame-width: 1100px;
 
   --shadow-card: 0 24px 54px rgba(0, 0, 0, 0.38);
-  --topbar-bg: rgba(10, 10, 12, 0.68);
-  --panel-bg: rgba(23, 24, 28, 0.72);
-  --panel-bg-soft: rgba(255, 255, 255, 0.05);
-  --input-bg: rgba(15, 16, 19, 0.84);
+  --topbar-bg: rgba(13, 15, 18, 0.76);
+  --panel-bg: rgba(20, 23, 27, 0.80);
+  --panel-bg-soft: rgba(111, 163, 114, 0.07);
+  --input-bg: rgba(15, 19, 18, 0.88);
   --result-bg: linear-gradient(
     140deg,
-    rgba(255, 77, 103, 0.18),
-    rgba(255, 255, 255, 0.06) 40%,
-    rgba(18, 19, 24, 0.86)
+    rgba(111, 163, 114, 0.08),
+    rgba(113, 142, 133, 0.03) 40%,
+    rgba(15, 25, 21, 0.88)
   );
-  --assistant-bubble-bg: rgba(255, 255, 255, 0.04);
-  --user-bubble-bg: linear-gradient(135deg, rgba(255, 77, 103, 0.18), rgba(255, 255, 255, 0.05));
-  --selection-bg: rgba(255, 77, 103, 0.14);
-  --selection-ring: rgba(255, 98, 121, 0.56);
+  --assistant-bubble-bg: rgba(111, 163, 114, 0.03);
+  --user-bubble-bg: linear-gradient(135deg, rgba(111, 163, 114, 0.08), rgba(113, 142, 133, 0.03));
+  --selection-bg: rgba(111, 163, 114, 0.14);
+  --selection-ring: rgba(129, 179, 129, 0.36);
   color-scheme: dark;
 }
 
 [data-theme='light'] {
   --bg-page:
-    radial-gradient(circle at 18% 16%, rgba(255, 98, 121, 0.06), transparent 28%),
-    radial-gradient(circle at 78% 12%, rgba(24, 24, 28, 0.03), transparent 30%),
-    linear-gradient(180deg, #fffdfd 0%, #fff7f8 100%);
-  --bg-card: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(255, 244, 246, 0.98));
-  --line: rgba(50, 55, 68, 0.16);
-  --line-strong: rgba(223, 36, 69, 0.24);
-  --text-main: #17191f;
-  --text-muted: #4f5562;
-  --text-soft: #737986;
-  --action: #cf2340;
-  --action-strong: #e33c57;
-  --action-soft: rgba(223, 36, 69, 0.08);
-  --action-soft-strong: rgba(223, 36, 69, 0.12);
+    radial-gradient(circle at 18% 16%, rgba(113, 142, 133, 0.04), transparent 28%),
+    radial-gradient(circle at 78% 12%, rgba(113, 142, 133, 0.02), transparent 30%),
+    linear-gradient(180deg, #fafcfb 0%, #f8fbfa 100%);
+  --bg-card: linear-gradient(160deg, rgba(246, 248, 247, 0.98), rgba(243, 247, 245, 0.99));
+  --line: rgba(113, 142, 133, 0.1);
+  --line-strong: rgba(113, 142, 133, 0.16);
+  --text-main: #1a2520;
+  --text-muted: #445550;
+  --text-soft: #5b716a;
+  --action: #5a8f6f;
+  --action-strong: #6fa372;
+  --action-soft: rgba(111, 163, 114, 0.1);
+  --action-soft-strong: rgba(111, 163, 114, 0.13);
   --action-ink: #ffffff;
-  --focus-ring: #d92a49;
-  --shadow-card: 0 18px 34px rgba(27, 29, 35, 0.12);
-  --primary-btn-bg: linear-gradient(135deg, #e33c57, #9f1028);
+  --focus-ring: rgba(129, 179, 129, 0.28);
+  --shadow-card: 0 18px 34px rgba(13, 42, 9, 0.08);
+  --primary-btn-bg: linear-gradient(135deg, #6fa372, #3d6843);
   --primary-btn-text: #ffffff;
-  --primary-btn-shadow: 0 12px 24px rgba(159, 16, 40, 0.2);
-  --topbar-bg: rgba(255, 255, 255, 0.82);
-  --panel-bg: rgba(255, 255, 255, 0.78);
-  --panel-bg-soft: rgba(223, 36, 69, 0.06);
-  --input-bg: rgba(255, 255, 255, 0.94);
-  --result-bg: linear-gradient(135deg, rgba(227, 60, 87, 0.1), rgba(255, 255, 255, 0.98));
-  --assistant-bubble-bg: rgba(23, 25, 31, 0.04);
-  --user-bubble-bg: linear-gradient(135deg, rgba(227, 60, 87, 0.1), rgba(255, 255, 255, 0.92));
-  --selection-bg: rgba(227, 60, 87, 0.08);
-  --selection-ring: rgba(223, 36, 69, 0.34);
+  --primary-btn-shadow: 0 12px 24px rgba(61, 104, 67, 0.16);
+  --topbar-bg: rgba(250, 252, 251, 0.92);
+  --panel-bg: rgba(245, 247, 246, 0.88);
+  --panel-bg-soft: rgba(111, 163, 114, 0.06);
+  --input-bg: rgba(255, 255, 255, 0.97);
+  --result-bg: linear-gradient(135deg, rgba(111, 163, 114, 0.08), rgba(242, 246, 244, 0.98));
+  --assistant-bubble-bg: rgba(111, 163, 114, 0.02);
+  --user-bubble-bg: linear-gradient(135deg, rgba(111, 163, 114, 0.08), rgba(245, 247, 246, 0.97));
+  --selection-bg: rgba(111, 163, 114, 0.12);
+  --selection-ring: rgba(129, 179, 129, 0.32);
   color-scheme: light;
 }
 
@@ -156,7 +186,7 @@ input {
   left: -90px;
   width: 320px;
   height: 320px;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.26), transparent 68%);
+  background: radial-gradient(ellipse, rgba(255, 255, 255, 0.26), transparent 68%);
   animation: drift 10s ease-in-out infinite;
 }
 
@@ -165,7 +195,7 @@ input {
   top: 180px;
   width: 360px;
   height: 360px;
-  background: radial-gradient(circle, rgba(255, 66, 94, 0.34), transparent 70%);
+  background: radial-gradient(circle, rgba(113, 142, 133, 0.12), transparent 70%);
   animation: drift 14s ease-in-out infinite reverse;
 }
 
@@ -203,32 +233,25 @@ input {
 .brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
   text-decoration: none;
 }
 
+.brand__logo-frame {
+  width: 108px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .brand__logo {
-  width: 72px;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
   display: block;
-  flex-shrink: 0;
   object-fit: contain;
-}
-
-[data-theme='dark'] .brand__logo {
-  mix-blend-mode: screen;
-}
-
-[data-theme='light'] .brand__logo {
-  mix-blend-mode: color-burn;
-}
-
-.brand__label {
-  display: inline-block;
 }
 
 .topnav {
