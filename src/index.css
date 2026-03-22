@@ -115,7 +115,7 @@
   --line: rgba(113, 142, 133, 0.1);
   --line-strong: rgba(113, 142, 133, 0.16);
   --text-main: #1a2520;
-  --text-muted: #445550;
+  --text-muted: #516551;
   --text-soft: #5b716a;
   --action: #5a8f6f;
   --action-strong: #6fa372;
@@ -217,13 +217,13 @@ input {
 }
 
 .topbar__inner {
-  max-width: 1140px;
+  max-width: 1260px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
-  padding: 14px 16px;
+  gap: 26px;
+  padding: 14px 22px;
   border-radius: var(--radius-md);
   background: var(--topbar-bg);
   backdrop-filter: blur(10px);
@@ -257,21 +257,22 @@ input {
 .topnav {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
 }
 
 .topbar__actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 18px;
 }
 
 .topnav__link {
   text-decoration: none;
-  padding: 10px 14px;
+  padding: 11px 16px;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   transition: color 200ms ease, background-color 200ms ease;
+  font-weight: 600;
 }
 
 .topnav__link:hover,
@@ -516,7 +517,7 @@ input {
 }
 
 .rank-number.top-rank {
-  color: #4c594c;
+  color: #779c76;
   font-weight: 700;
 }
 
