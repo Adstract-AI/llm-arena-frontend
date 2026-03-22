@@ -139,24 +139,24 @@ input {
 
 .topnav__link:hover,
 .topnav__link:focus-visible {
-  color: var(--accent-alt);
-  background: var(--accent-alt-soft);
+  color: var(--nav-active-text);
+  background: var(--nav-active-bg);
   outline: none;
 }
 
 .topnav__link--active {
-  color: var(--accent-alt);
-  background: var(--accent-alt-soft);
+  color: var(--nav-active-text);
+  background: var(--nav-active-bg);
 }
 
 [data-theme='light'] .topnav__link--active {
-  background: var(--accent-alt-soft);
+  background: var(--nav-active-bg);
 }
 
 [data-theme='light'] .topnav__link:hover,
 [data-theme='light'] .topnav__link:focus-visible {
-  color: var(--accent-alt);
-  background: var(--accent-alt-soft);
+  color: var(--nav-active-text);
+  background: var(--nav-active-bg);
 }
 
 .theme-toggle {
@@ -181,11 +181,19 @@ input {
 }
 
 .theme-toggle:hover {
-  background: var(--accent-alt-soft);
+  color: var(--nav-active-text);
+  background: var(--nav-active-bg);
 }
 
 [data-theme='light'] .theme-toggle:hover {
-  background: var(--accent-alt-soft);
+  color: var(--nav-active-text);
+  background: var(--nav-active-bg);
+}
+
+.theme-toggle:focus-visible {
+  color: var(--nav-active-text);
+  background: var(--nav-active-bg);
+  outline: none;
 }
 
 .app-main {

@@ -106,6 +106,8 @@
   --user-bubble-bg: linear-gradient(135deg, rgba(111, 163, 114, 0.08), rgba(113, 142, 133, 0.03));
   --selection-bg: rgba(111, 163, 114, 0.12);
   --selection-ring: var(--accent-alt-ring);
+  --nav-active-text: rgba(241, 244, 243, 0.96);
+  --nav-active-bg: rgba(241, 244, 243, 0.09);
   color-scheme: dark;
 }
 
@@ -142,5 +144,7 @@
   --user-bubble-bg: linear-gradient(135deg, rgba(111, 163, 114, 0.08), rgba(245, 247, 246, 0.97));
   --selection-bg: rgba(111, 163, 114, 0.1);
   --selection-ring: var(--accent-alt-ring);
+  --nav-active-text: #3f465a;
+  --nav-active-bg: rgba(63, 70, 90, 0.1);
   color-scheme: light;
 }
