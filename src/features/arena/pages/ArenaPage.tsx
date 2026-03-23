@@ -110,7 +110,7 @@ export function ArenaPage() {
 
             {round ? (
               <article className="chat-message chat-message--assistant chat-message--duel">
-                <p className="chat-message__role">Response Duel</p>
+                <p className="chat-message__role">Responses</p>
                 <ResponsePair
                   round={round}
                   selectedVote={selectedVote}

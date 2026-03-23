@@ -1,12 +1,11 @@
 import { env } from '../config/env'
 
 function buildUrl(path: string) {
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`
-
   if (!env.apiBaseUrl) {
-    return normalizedPath
+    throw new Error('VITE_API_BASE_URL is not set. Configure it in your .env file.')
   }
 
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
   return `${env.apiBaseUrl}${normalizedPath}`
 }
 
