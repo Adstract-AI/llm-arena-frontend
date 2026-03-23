@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { getLeaderboard } from '../api/leaderboardApi'
 import type { LeaderboardModel } from '../types'
 
@@ -151,7 +152,12 @@ export function LeaderboardPage() {
                       </span>
                     </td>
                     <td className="model-cell">
-                      {model.name}
+                      <Link
+                        to={`/models/${encodeURIComponent(model.name)}`}
+                        className="leaderboard-model-link"
+                      >
+                        {model.name}
+                      </Link>
                       <span className="model-provider">{model.providerDisplayName}</span>
                     </td>
                     <td className="score-cell numeric-col">
