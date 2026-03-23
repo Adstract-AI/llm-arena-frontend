@@ -83,7 +83,7 @@ export function ArenaPage() {
       <section className="chat-space" aria-live="polite">
         <article className="chat-message chat-message--assistant">
           <p className="chat-message__role">MakArena</p>
-          <p className="chat-message__text">Send a prompt to begin.</p>
+          <p className="chat-message__text">Send a prompt to begin rating.</p>
         </article>
 
         {currentPrompt ? (
