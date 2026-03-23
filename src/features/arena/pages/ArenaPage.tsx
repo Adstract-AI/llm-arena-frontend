@@ -81,11 +81,6 @@ export function ArenaPage() {
       </div>
 
       <section className="chat-space" aria-live="polite">
-        <article className="chat-message chat-message--assistant">
-          <p className="chat-message__role">MakArena</p>
-          <p className="chat-message__text">Send a prompt to begin rating.</p>
-        </article>
-
         {currentPrompt ? (
           <>
             <article className="chat-message chat-message--user">
@@ -136,11 +131,13 @@ export function ArenaPage() {
         )}
       </section>
 
-      <PromptInput
-        onSubmit={handlePromptSubmit}
-        loading={isGenerating}
-        disabled={Boolean(currentPrompt)}
-      />
+      {!currentPrompt ? (
+        <PromptInput
+          onSubmit={handlePromptSubmit}
+          loading={isGenerating}
+          disabled={Boolean(currentPrompt)}
+        />
+      ) : null}
 
       {round ? (
         <>
@@ -153,7 +150,16 @@ export function ArenaPage() {
             />
           ) : (
             <section className="result-card" aria-live="polite">
-              <p className="result-card__kicker">Round complete</p>
+              <div className="result-card__top">
+                <p className="result-card__kicker">Vote submitted</p>
+                <button
+                  type="button"
+                  className="btn btn--ghost result-card__new-chat"
+                  onClick={resetRound}
+                >
+                  Start New Chat
+                </button>
+              </div>
               <h3>Thanks, your vote has been counted.</h3>
               <p className="result-card__summary">{voteOutcome.message}</p>
 
@@ -163,18 +169,15 @@ export function ArenaPage() {
                   <strong>{winnerLabel}</strong>
                 </article>
                 <article className="result-chip">
-                  <span className="result-chip__label">Answer 1 model</span>
+                  <span className="result-chip__label">Model 1</span>
                   <strong>{voteOutcome.answer1ModelName}</strong>
                 </article>
                 <article className="result-chip">
-                  <span className="result-chip__label">Answer 2 model</span>
+                  <span className="result-chip__label">Model 2</span>
                   <strong>{voteOutcome.answer2ModelName}</strong>
                 </article>
               </div>
 
-              <button type="button" className="btn btn--primary" onClick={resetRound}>
-                Start New Chat
-              </button>
             </section>
           )}
         </>

@@ -1,3 +1,5 @@
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import type { ArenaRound, VoteChoice } from '../types'
 
 interface ResponsePairProps {
@@ -12,6 +14,21 @@ interface ResponsePairProps {
   } | null
 }
 
+function renderMarkdown(text: string) {
+  return (
+    <div className="response-card__markdown">
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          pre: ({ children }) => <pre className="response-card__code">{children}</pre>,
+        }}
+      >
+        {text}
+      </ReactMarkdown>
+    </div>
+  )
+}
+
 export function ResponsePair({
   round,
   selectedVote,
@@ -22,41 +39,45 @@ export function ResponsePair({
 }: ResponsePairProps) {
   return (
     <section className="duel-grid" aria-live="polite">
-      <button
-        type="button"
-        className={
-          selectedVote === 'modelA'
-            ? 'response-card response-card--selected'
-            : 'response-card'
-        }
-        disabled={disabled}
-        onClick={() => onSelectVote('modelA')}
-        aria-label="Select answer 1"
-      >
-        <p className="response-card__badge">
-          Answer 1
-          {reveal && revealedModels ? ` · ${revealedModels.answer1Model}` : ''}
-        </p>
-        <p>{round.answerA}</p>
-      </button>
+      <div className="response-column">
+        <p className="response-column__title">Answer 1</p>
+        {reveal && revealedModels ? (
+          <p className="response-column__meta">{revealedModels.answer1Model}</p>
+        ) : null}
+        <button
+          type="button"
+          className={
+            selectedVote === 'modelA'
+              ? 'response-card response-card--selected'
+              : 'response-card'
+          }
+          disabled={disabled}
+          onClick={() => onSelectVote('modelA')}
+          aria-label="Select answer 1"
+        >
+          <div className="response-card__content">{renderMarkdown(round.answerA)}</div>
+        </button>
+      </div>
 
-      <button
-        type="button"
-        className={
-          selectedVote === 'modelB'
-            ? 'response-card response-card--selected'
-            : 'response-card'
-        }
-        disabled={disabled}
-        onClick={() => onSelectVote('modelB')}
-        aria-label="Select answer 2"
-      >
-        <p className="response-card__badge">
-          Answer 2
-          {reveal && revealedModels ? ` · ${revealedModels.answer2Model}` : ''}
-        </p>
-        <p>{round.answerB}</p>
-      </button>
+      <div className="response-column">
+        <p className="response-column__title">Answer 2</p>
+        {reveal && revealedModels ? (
+          <p className="response-column__meta">{revealedModels.answer2Model}</p>
+        ) : null}
+        <button
+          type="button"
+          className={
+            selectedVote === 'modelB'
+              ? 'response-card response-card--selected'
+              : 'response-card'
+          }
+          disabled={disabled}
+          onClick={() => onSelectVote('modelB')}
+          aria-label="Select answer 2"
+        >
+          <div className="response-card__content">{renderMarkdown(round.answerB)}</div>
+        </button>
+      </div>
     </section>
   )
 }
