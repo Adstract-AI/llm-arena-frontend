@@ -27,7 +27,7 @@ function getInitialTheme(): Theme {
 export function AppLayout() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const logoSrc =
-    theme === 'dark' ? '/makarena_logo_black.png' : '/makarena_logo_green.png'
+    theme === 'dark' ? '/mak_final_black_transparent.png' : '/mak_final_white_transparent.png'
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
