@@ -93,7 +93,7 @@ export function LeaderboardPage() {
         <div className="page-card page-card--helper">
           <p className="eyebrow">Leaderboard</p>
           <h2>Model ranking by community votes.</h2>
-          <p>Live ranking from backend metrics.</p>
+          <p>See how models are performing based on recent community comparisons.</p>
         </div>
 
         <div className="leaderboard-card">

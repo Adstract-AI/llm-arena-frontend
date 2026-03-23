@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
 import { startRound, submitVote } from '../api/arenaApi'
 import { PromptInput } from '../components/PromptInput'
 import { ResponsePair } from '../components/ResponsePair'
@@ -69,22 +70,37 @@ export function ArenaPage() {
     setCurrentPrompt(null)
   }
 
+  const arenaClassName = [
+    'arena',
+    currentPrompt ? 'arena--active' : 'arena--idle',
+    round && !voteOutcome ? 'arena--with-vote-panel' : null,
+    voteOutcome ? 'arena--with-result-panel' : null,
+  ]
+    .filter(Boolean)
+    .join(' ')
+
   return (
-    <section className="arena">
-      <div className="page-card page-card--helper">
-        <p className="eyebrow">ChatVote Arena</p>
-        <h2>Put two anonymous models head-to-head.</h2>
-        <p>
-          Submit a prompt, compare both responses, then vote. Model identities
-          unlock after voting.
-        </p>
-      </div>
+    <section className={arenaClassName}>
+      {!currentPrompt ? (
+        <div className="page-card page-card--helper">
+          <p className="eyebrow">Model Arena</p>
+          <h2>Put two anonymous models head-to-head.</h2>
+          <p>
+            Submit a prompt, compare both responses, then vote. Model identities
+            unlock after voting.
+          </p>
+          <div className="arena-note" aria-label="Model disclaimer">
+            <strong>Keep in mind:</strong>
+            <span>Responses may be slow, inaccurate, or hallucinated.</span>
+            <span>Always double-check important facts before relying on them.</span>
+          </div>
+        </div>
+      ) : null}
 
       <section className="chat-space" aria-live="polite">
         {currentPrompt ? (
           <>
             <article className="chat-message chat-message--user">
-              <p className="chat-message__role">You</p>
               <p className="chat-message__text">{currentPrompt}</p>
             </article>
 
@@ -124,11 +140,7 @@ export function ArenaPage() {
               </article>
             ) : null}
           </>
-        ) : (
-          <article className="chat-message chat-message--empty">
-            <p className="chat-message__text">Your comparison will appear here.</p>
-          </article>
-        )}
+        ) : null}
       </section>
 
       {!currentPrompt ? (
@@ -157,27 +169,29 @@ export function ArenaPage() {
                   className="btn btn--ghost result-card__new-chat"
                   onClick={resetRound}
                 >
+                  <RefreshRoundedIcon
+                    aria-hidden="true"
+                    className="result-card__new-chat-icon"
+                  />
                   Start New Chat
                 </button>
               </div>
               <h3>Thanks, your vote has been counted.</h3>
-              <p className="result-card__summary">{voteOutcome.message}</p>
 
               <div className="result-card__grid">
                 <article className="result-chip">
-                  <span className="result-chip__label">Winning model</span>
-                  <strong>{winnerLabel}</strong>
-                </article>
-                <article className="result-chip">
                   <span className="result-chip__label">Model 1</span>
                   <strong>{voteOutcome.answer1ModelName}</strong>
+                </article>
+                <article className="result-chip result-chip--winner">
+                  <span className="result-chip__label">Winning model</span>
+                  <strong>{winnerLabel}</strong>
                 </article>
                 <article className="result-chip">
                   <span className="result-chip__label">Model 2</span>
                   <strong>{voteOutcome.answer2ModelName}</strong>
                 </article>
               </div>
-
             </section>
           )}
         </>

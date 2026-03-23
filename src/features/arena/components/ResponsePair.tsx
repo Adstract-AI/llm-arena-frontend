@@ -40,7 +40,7 @@ export function ResponsePair({
   return (
     <section className="duel-grid" aria-live="polite">
       <div className="response-column">
-        <p className="response-column__title">Answer 1</p>
+        <p className="response-column__title">Model 1</p>
         {reveal && revealedModels ? (
           <p className="response-column__meta">{revealedModels.answer1Model}</p>
         ) : null}
@@ -53,14 +53,14 @@ export function ResponsePair({
           }
           disabled={disabled}
           onClick={() => onSelectVote('modelA')}
-          aria-label="Select answer 1"
+          aria-label="Select model 1"
         >
           <div className="response-card__content">{renderMarkdown(round.answerA)}</div>
         </button>
       </div>
 
       <div className="response-column">
-        <p className="response-column__title">Answer 2</p>
+        <p className="response-column__title">Model 2</p>
         {reveal && revealedModels ? (
           <p className="response-column__meta">{revealedModels.answer2Model}</p>
         ) : null}
@@ -73,7 +73,7 @@ export function ResponsePair({
           }
           disabled={disabled}
           onClick={() => onSelectVote('modelB')}
-          aria-label="Select answer 2"
+          aria-label="Select model 2"
         >
           <div className="response-card__content">{renderMarkdown(round.answerB)}</div>
         </button>
