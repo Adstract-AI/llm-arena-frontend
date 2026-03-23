@@ -1,11 +1,56 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { getLeaderboard } from '../api/leaderboardApi'
 import type { LeaderboardModel } from '../types'
+
+type NumericSortKey =
+  | 'eloScore'
+  | 'nonTieWinRate'
+  | 'matches'
+  | 'wins'
+  | 'losses'
+  | 'ties'
+
+type SortDirection = 'asc' | 'desc'
+
+interface SortState {
+  key: NumericSortKey
+  direction: SortDirection
+}
+
+const numericSortColumns: Array<{ key: NumericSortKey; label: string }> = [
+  { key: 'eloScore', label: 'ELO' },
+  { key: 'nonTieWinRate', label: 'Non-tie Win %' },
+  { key: 'matches', label: 'Matches' },
+  { key: 'wins', label: 'Wins' },
+  { key: 'losses', label: 'Losses' },
+  { key: 'ties', label: 'Ties' },
+]
 
 export function LeaderboardPage() {
   const [models, setModels] = useState<LeaderboardModel[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [sort, setSort] = useState<SortState>({ key: 'eloScore', direction: 'desc' })
+
+  const sortedModels = useMemo(() => {
+    return [...models].sort((a, b) => {
+      const direction = sort.direction === 'asc' ? 1 : -1
+      return (a[sort.key] - b[sort.key]) * direction
+    })
+  }, [models, sort])
+
+  function toggleNumericSort(key: NumericSortKey) {
+    setSort((previous) => {
+      if (previous.key !== key) {
+        return { key, direction: 'desc' }
+      }
+
+      return {
+        key,
+        direction: previous.direction === 'desc' ? 'asc' : 'desc',
+      }
+    })
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -19,9 +64,14 @@ export function LeaderboardPage() {
         if (isMounted) {
           setModels(data)
         }
-      } catch {
+      } catch (error) {
         if (isMounted) {
-          setError('Could not load leaderboard right now.')
+          setModels([])
+          setError(
+            error instanceof Error
+              ? error.message
+              : 'Could not load leaderboard right now.',
+          )
         }
       } finally {
         if (isMounted) {
@@ -38,14 +88,15 @@ export function LeaderboardPage() {
   }, [])
 
   return (
-    <section className="leaderboard">
-      <div className="page-card page-card--helper">
-        <p className="eyebrow">Leaderboard</p>
-        <h2>Model ranking by community votes.</h2>
-        <p>Endpoint integration is ready to plug in when available.</p>
-      </div>
+    <section className="leaderboard leaderboard--wide">
+      <div className="leaderboard-shell">
+        <div className="page-card page-card--helper">
+          <p className="eyebrow">Leaderboard</p>
+          <h2>Model ranking by community votes.</h2>
+          <p>Live ranking from backend metrics.</p>
+        </div>
 
-      <div className="leaderboard-card">
+        <div className="leaderboard-card">
         {isLoading ? (
           <div className="leaderboard-loading">
             <div className="leaderboard-spinner"></div>
@@ -58,37 +109,68 @@ export function LeaderboardPage() {
         {!isLoading && !error && models.length > 0 ? (
           <div className="leaderboard-table-wrap">
             <table className="leaderboard-table" aria-label="Model leaderboard">
+              <colgroup>
+                <col className="rank-col" />
+                <col className="model-col" />
+                <col className="stat-col" />
+                <col className="stat-col" />
+                <col className="stat-col" />
+                <col className="stat-col" />
+                <col className="stat-col" />
+                <col className="stat-col" />
+              </colgroup>
               <thead>
                 <tr>
                   <th className="rank-col">Rank</th>
                   <th className="model-col">Model</th>
-                  <th className="score-col">Score</th>
-                  <th className="winrate-col">Win Rate</th>
-                  <th className="votes-col">Votes</th>
+                  {numericSortColumns.map((column) => {
+                    const active = sort.key === column.key
+                    const directionMarker = active ? (sort.direction === 'desc' ? '↓' : '↑') : ''
+                    return (
+                      <th key={column.key} className="numeric-col leaderboard-th-sort">
+                        <button
+                          type="button"
+                          className={active ? 'th-sort-btn th-sort-btn--active' : 'th-sort-btn'}
+                          onClick={() => toggleNumericSort(column.key)}
+                          aria-label={`Sort by ${column.label}`}
+                        >
+                          {column.label}
+                          <span className="th-sort-btn__marker">{directionMarker}</span>
+                        </button>
+                      </th>
+                    )
+                  })}
                 </tr>
               </thead>
               <tbody>
-                {models.map((model) => (
-                  <tr key={model.id} className={`rank-${Math.min(model.rank, 3)}`}>
+                {sortedModels.map((model, index) => (
+                  <tr key={model.id} className={`rank-${Math.min(index + 1, 3)}`}>
                     <td className="rank-cell">
-                      <span className={`rank-number ${model.rank <= 3 ? 'top-rank' : ''}`}>
-                        #{model.rank}
+                      <span className={`rank-number ${index + 1 <= 3 ? 'top-rank' : ''}`}>
+                        #{index + 1}
                       </span>
                     </td>
-                    <td className="model-cell">{model.name}</td>
-                    <td className="score-cell">
-                      <span className="score-badge">{model.score}</span>
+                    <td className="model-cell">
+                      {model.name}
+                      <span className="model-provider">{model.providerDisplayName}</span>
                     </td>
-                    <td className="winrate-cell">{model.winRate.toFixed(1)}%</td>
-                    <td className="votes-cell">{model.votes.toLocaleString()}</td>
+                    <td className="score-cell numeric-col">
+                      <span className="score-badge">{model.eloScore.toFixed(2)}</span>
+                    </td>
+                    <td className="winrate-cell numeric-col">{(model.nonTieWinRate * 100).toFixed(1)}%</td>
+                    <td className="votes-cell numeric-col">{model.matches.toLocaleString()}</td>
+                    <td className="votes-cell numeric-col">{model.wins.toLocaleString()}</td>
+                    <td className="votes-cell numeric-col">{model.losses.toLocaleString()}</td>
+                    <td className="votes-cell numeric-col">{model.ties.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        ) : !isLoading && models.length === 0 ? (
+        ) : !isLoading && !error && models.length === 0 ? (
           <p className="leaderboard-note">No models in leaderboard yet.</p>
         ) : null}
+        </div>
       </div>
     </section>
   )

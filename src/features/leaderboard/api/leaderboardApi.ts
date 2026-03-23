@@ -1,18 +1,36 @@
+import { httpGet } from '../../../shared/network/httpClient'
 import type { LeaderboardModel } from '../types'
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+interface LeaderboardApiModel {
+  model_name: string
+  provider_name: string
+  provider_display_name: string
+  matches: number
+  wins: number
+  losses: number
+  ties: number
+  win_rate: number
+  non_tie_win_rate: number
+  elo_score: number
+  avg_prompt_tokens: number
+  avg_completion_tokens: number
+  avg_total_tokens: number
+  avg_latency_ms: number | null
+  avg_response_length_chars: number
 }
 
 export async function getLeaderboard(): Promise<LeaderboardModel[]> {
-  await wait(400)
+  const response = await httpGet<LeaderboardApiModel[]>('/api/arena/leaderboard/')
 
-  // Placeholder until backend endpoint is connected.
-  return [
-    { id: 'm1', rank: 1, name: 'Astra Prime', score: 1912, winRate: 64.2, votes: 1432 },
-    { id: 'm2', rank: 2, name: 'Nimbus Ultra', score: 1874, winRate: 61.9, votes: 1377 },
-    { id: 'm3', rank: 3, name: 'Nova Reasoner', score: 1826, winRate: 59.3, votes: 1201 },
-    { id: 'm4', rank: 4, name: 'Vector 3.2', score: 1789, winRate: 56.7, votes: 1134 },
-    { id: 'm5', rank: 5, name: 'Lyric Pro', score: 1748, winRate: 54.8, votes: 987 },
-  ]
+  return response.map((model) => ({
+    id: `${model.provider_name}:${model.model_name}`,
+    name: model.model_name,
+    providerDisplayName: model.provider_display_name,
+    eloScore: model.elo_score,
+    nonTieWinRate: model.non_tie_win_rate,
+    matches: model.matches,
+    wins: model.wins,
+    losses: model.losses,
+    ties: model.ties,
+  }))
 }

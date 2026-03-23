@@ -25,7 +25,11 @@ npm run lint
 ```
 
 ## Environment
-Set `VITE_API_BASE_URL` in `.env`.
+For local development, API calls use Vite proxy:
+- frontend calls relative `/api/...`
+- Vite proxies `/api` to `VITE_BACKEND_PROXY_TARGET` (default `http://127.0.0.1:8000`)
+
+`VITE_API_BASE_URL` is optional. Leave it empty for proxy mode.
 
 Use `.env.example` as the reference template.
 

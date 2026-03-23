@@ -6,6 +6,10 @@ interface ResponsePairProps {
   onSelectVote: (vote: VoteChoice) => void
   disabled: boolean
   reveal: boolean
+  revealedModels?: {
+    answer1Model: string
+    answer2Model: string
+  } | null
 }
 
 export function ResponsePair({
@@ -14,6 +18,7 @@ export function ResponsePair({
   onSelectVote,
   disabled,
   reveal,
+  revealedModels,
 }: ResponsePairProps) {
   return (
     <section className="duel-grid" aria-live="polite">
@@ -30,7 +35,7 @@ export function ResponsePair({
       >
         <p className="response-card__badge">
           Answer 1
-          {reveal ? ` · ${round.modelAName}` : ''}
+          {reveal && revealedModels ? ` · ${revealedModels.answer1Model}` : ''}
         </p>
         <p>{round.answerA}</p>
       </button>
@@ -48,7 +53,7 @@ export function ResponsePair({
       >
         <p className="response-card__badge">
           Answer 2
-          {reveal ? ` · ${round.modelBName}` : ''}
+          {reveal && revealedModels ? ` · ${revealedModels.answer2Model}` : ''}
         </p>
         <p>{round.answerB}</p>
       </button>

@@ -14,20 +14,20 @@ export function ArenaPage() {
   const [isVoting, setIsVoting] = useState(false)
 
   const winnerLabel = useMemo(() => {
-    if (!voteOutcome || !round) {
+    if (!voteOutcome) {
       return null
     }
 
     if (voteOutcome.winner === 'modelA') {
-      return round.modelAName
+      return voteOutcome.answer1ModelName
     }
 
     if (voteOutcome.winner === 'modelB') {
-      return round.modelBName
+      return voteOutcome.answer2ModelName
     }
 
-    return 'Tie (no single winner)'
-  }, [round, voteOutcome])
+    return 'Tie / No single winner'
+  }, [voteOutcome])
 
   async function handlePromptSubmit(prompt: string) {
     if (round || isGenerating || isVoting) {
@@ -117,6 +117,14 @@ export function ArenaPage() {
                   onSelectVote={setSelectedVote}
                   disabled={Boolean(voteOutcome) || isVoting}
                   reveal={Boolean(voteOutcome)}
+                  revealedModels={
+                    voteOutcome
+                      ? {
+                          answer1Model: voteOutcome.answer1ModelName,
+                          answer2Model: voteOutcome.answer2ModelName,
+                        }
+                      : null
+                  }
                 />
               </article>
             ) : null}
@@ -151,16 +159,16 @@ export function ArenaPage() {
 
               <div className="result-card__grid">
                 <article className="result-chip">
-                  <span className="result-chip__label">Your Vote</span>
+                  <span className="result-chip__label">Winning model</span>
                   <strong>{winnerLabel}</strong>
                 </article>
                 <article className="result-chip">
                   <span className="result-chip__label">Answer 1 model</span>
-                  <strong>{round.modelAName}</strong>
+                  <strong>{voteOutcome.answer1ModelName}</strong>
                 </article>
                 <article className="result-chip">
                   <span className="result-chip__label">Answer 2 model</span>
-                  <strong>{round.modelBName}</strong>
+                  <strong>{voteOutcome.answer2ModelName}</strong>
                 </article>
               </div>
 

@@ -1,68 +1,106 @@
+import { httpPost } from '../../../shared/network/httpClient'
 import type { ArenaRound, VoteChoice, VoteOutcome } from '../types'
 
-const MODEL_POOL: Array<[string, string]> = [
-  ['Astra Prime', 'Nimbus Ultra'],
-  ['Vector 3.2', 'Lyric Pro'],
-  ['Orion Max', 'Nova Reasoner'],
-]
+type ApiSlot = 'A' | 'B'
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
+interface StartBattleResponse {
+  id: string
+  prompt: string
+  responses: Array<{
+    slot: ApiSlot
+    response_text: string
+  }>
 }
 
-function buildAnswerA(prompt: string) {
-  return `Direct approach for "${prompt}": break the problem into steps, produce a concise answer, and add one practical follow-up action.`
+interface VoteResponse {
+  id: string
+  choice: string
+  feedback: string | null
+  winner_provider_name: string | null
+  winner_model_name: string | null
+  responses: Array<{
+    slot: ApiSlot
+    response_text: string
+    model_name: string
+    provider_name: string
+    provider_display_name: string
+    is_winner: boolean
+  }>
 }
 
-function buildAnswerB(prompt: string) {
-  return `Alternative strategy for "${prompt}": start with assumptions, explain tradeoffs, then provide a structured recommendation with next steps.`
+function toApiChoice(vote: VoteChoice): string {
+  if (vote === 'modelA') return 'A'
+  if (vote === 'modelB') return 'B'
+  if (vote === 'bothGood') return 'BOTH_GOOD'
+  return 'BOTH_BAD'
+}
+
+function getResponseBySlot<T extends { slot: ApiSlot }>(responses: T[], slot: ApiSlot): T | null {
+  return responses.find((response) => response.slot === slot) ?? null
 }
 
 export async function startRound(prompt: string): Promise<ArenaRound> {
-  await wait(550)
+  const response = await httpPost<StartBattleResponse, { prompt: string }>(
+    '/api/arena/battles/',
+    { prompt },
+  )
 
-  const modelPair = MODEL_POOL[Math.floor(Math.random() * MODEL_POOL.length)]
+  const answerA = getResponseBySlot(response.responses, 'A')
+  const answerB = getResponseBySlot(response.responses, 'B')
+
+  if (!answerA || !answerB) {
+    throw new Error('Battle response is missing answer slots A/B.')
+  }
 
   return {
-    roundId: crypto.randomUUID(),
-    prompt,
-    answerA: buildAnswerA(prompt),
-    answerB: buildAnswerB(prompt),
-    modelAName: modelPair[0],
-    modelBName: modelPair[1],
+    roundId: response.id,
+    prompt: response.prompt,
+    answerA: answerA.response_text,
+    answerB: answerB.response_text,
   }
 }
 
-export async function submitVote(
-  roundId: string,
-  vote: VoteChoice,
-): Promise<VoteOutcome> {
-  await wait(350)
-  void roundId
+export async function submitVote(roundId: string, vote: VoteChoice): Promise<VoteOutcome> {
+  const response = await httpPost<VoteResponse, { choice: string }>(
+    `/api/arena/battles/${encodeURIComponent(roundId)}/vote/`,
+    { choice: toApiChoice(vote) },
+  )
 
-  if (vote === 'modelA') {
-    return {
-      winner: 'modelA',
-      message: 'Answer 1 wins this round.',
-    }
+  const answerA = getResponseBySlot(response.responses, 'A')
+  const answerB = getResponseBySlot(response.responses, 'B')
+
+  if (!answerA || !answerB) {
+    throw new Error('Vote response is missing answer slots A/B.')
   }
 
-  if (vote === 'modelB') {
-    return {
-      winner: 'modelB',
-      message: 'Answer 2 wins this round.',
-    }
-  }
+  const winnerResponse = response.responses.find((entry) => entry.is_winner)
+  const winner =
+    winnerResponse?.slot === 'A'
+      ? 'modelA'
+      : winnerResponse?.slot === 'B'
+        ? 'modelB'
+        : 'tie'
 
-  if (vote === 'bothGood') {
-    return {
-      winner: 'tie',
-      message: 'Both answers were marked as good.',
-    }
-  }
+  const message =
+    winner === 'modelA'
+      ? 'Answer 1 won this round.'
+      : winner === 'modelB'
+        ? 'Answer 2 won this round.'
+        : vote === 'bothGood'
+          ? 'You marked both answers as good.'
+          : vote === 'bothBad'
+            ? 'You marked both answers as not good.'
+            : 'Round saved successfully.'
 
   return {
-    winner: 'tie',
-    message: 'Both answers were marked as not good.',
+    winner,
+    message,
+    choice: vote,
+    winnerModelName: response.winner_model_name,
+    winnerProviderName: response.winner_provider_name,
+    answer1ModelName: answerA.model_name,
+    answer2ModelName: answerB.model_name,
+    answer1ProviderDisplayName: answerA.provider_display_name,
+    answer2ProviderDisplayName: answerB.provider_display_name,
   }
 }
