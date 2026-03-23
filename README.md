@@ -31,6 +31,18 @@ Set a direct backend base URL in `.env`:
 
 Use `.env.example` as the reference template.
 
+## Docker
+From the repository root, you can run the full stack with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+This starts:
+- frontend on `http://localhost:5173`
+- backend on `http://localhost:8000`
+- postgres on `localhost:5432`
+
 ## Project Structure
 ```text
 src/
