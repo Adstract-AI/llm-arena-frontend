@@ -43,6 +43,15 @@ This starts:
 - backend on `http://localhost:8000`
 - postgres on `localhost:5432`
 
+For a production-style frontend image with Nginx, use `Dockerfile.render`.
+It builds the Vite app, serves it through Nginx, supports React Router SPA routes, and reads `VITE_API_BASE_URL` at container startup.
+
+If you only want the frontend from inside this folder, run:
+
+```bash
+docker compose up --build
+```
+
 ## Project Structure
 ```text
 src/
