@@ -19,7 +19,7 @@ interface SortState {
 
 const numericSortColumns: Array<{ key: NumericSortKey; label: string }> = [
   { key: 'eloScore', label: 'ELO' },
-  { key: 'nonTieWinRate', label: 'Non-tie Win %' },
+  { key: 'nonTieWinRate', label: 'Win Rate %' },
   { key: 'matches', label: 'Matches' },
   { key: 'wins', label: 'Wins' },
   { key: 'losses', label: 'Losses' },

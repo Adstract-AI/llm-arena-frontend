@@ -38,10 +38,12 @@ export function AboutPage() {
       </section>
 
       <section className="about-funding" aria-label="Funding">
-        <p className="about-funding__label">Funding</p>
-        <p className="about-funding__text">
-          This project is supported by the Faculty of Computer Science and Engineering.
-        </p>
+        <p className="about-funding__label">Funded by</p>
+        <img
+          src="/finki_logo.png"
+          alt="Faculty of Computer Science and Engineering logo"
+          className="about-funding__logo"
+        />
       </section>
     </section>
   )

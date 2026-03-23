@@ -1,54 +1,49 @@
+import axios, { AxiosError } from 'axios'
 import { env } from '../config/env'
 
-function buildUrl(path: string) {
-  if (!env.apiBaseUrl) {
-    throw new Error('VITE_API_BASE_URL is not set. Configure it in your .env file.')
-  }
-
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`
-  return `${env.apiBaseUrl}${normalizedPath}`
+if (!env.apiBaseUrl) {
+  throw new Error('VITE_API_BASE_URL is not set. Configure it in your .env file.')
 }
 
-async function parseErrorMessage(response: Response): Promise<string> {
-  try {
-    const body = (await response.json()) as { detail?: string; message?: string }
-    return body.detail ?? body.message ?? `Request failed with status ${response.status}`
-  } catch {
-    return `Request failed with status ${response.status}`
+const http = axios.create({
+  baseURL: env.apiBaseUrl,
+  headers: {
+    Accept: 'application/json',
+  },
+})
+
+function parseErrorMessage(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError<{ detail?: string; message?: string }>
+    const status = axiosError.response?.status
+    const data = axiosError.response?.data
+    return (
+      data?.detail ??
+      data?.message ??
+      (status ? `Request failed with status ${status}` : 'Network request failed')
+    )
   }
+
+  return error instanceof Error ? error.message : 'Network request failed'
 }
 
 export async function httpGet<T>(path: string): Promise<T> {
-  const response = await fetch(buildUrl(path), {
-    method: 'GET',
-    headers: {
-      Accept: 'application/json',
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error(await parseErrorMessage(response))
+  try {
+    const response = await http.get<T>(path)
+    return response.data
+  } catch (error) {
+    throw new Error(parseErrorMessage(error))
   }
-
-  return (await response.json()) as T
 }
 
 export async function httpPost<TResponse, TBody extends object>(
   path: string,
   body: TBody,
 ): Promise<TResponse> {
-  const response = await fetch(buildUrl(path), {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  })
-
-  if (!response.ok) {
-    throw new Error(await parseErrorMessage(response))
+  try {
+    const response = await http.post<TResponse>(path, body)
+    return response.data
+  } catch (error) {
+    throw new Error(parseErrorMessage(error))
   }
-
-  return (await response.json()) as TResponse
 }
