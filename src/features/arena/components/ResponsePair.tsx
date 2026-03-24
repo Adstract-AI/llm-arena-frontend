@@ -40,10 +40,12 @@ export function ResponsePair({
   return (
     <section className="duel-grid" aria-live="polite">
       <div className="response-column">
-        <p className="response-column__title">Model 1</p>
-        {reveal && revealedModels ? (
-          <p className="response-column__meta">{revealedModels.answer1Model}</p>
-        ) : null}
+        <div className="response-column__header">
+          <p className="response-column__title">Model 1</p>
+          {reveal && revealedModels ? (
+            <p className="response-column__meta">{revealedModels.answer1Model}</p>
+          ) : null}
+        </div>
         <button
           type="button"
           className={
@@ -60,10 +62,12 @@ export function ResponsePair({
       </div>
 
       <div className="response-column">
-        <p className="response-column__title">Model 2</p>
-        {reveal && revealedModels ? (
-          <p className="response-column__meta">{revealedModels.answer2Model}</p>
-        ) : null}
+        <div className="response-column__header">
+          <p className="response-column__title">Model 2</p>
+          {reveal && revealedModels ? (
+            <p className="response-column__meta">{revealedModels.answer2Model}</p>
+          ) : null}
+        </div>
         <button
           type="button"
           className={
