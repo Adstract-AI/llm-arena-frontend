@@ -1,12 +1,12 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import type { ArenaRound, VoteChoice } from '../types'
+import type { ArenaTurn, VoteChoice } from '../types'
 
 interface ResponsePairProps {
-  round: ArenaRound
+  round: ArenaTurn
   selectedVote: VoteChoice | null
-  onSelectVote: (vote: VoteChoice) => void
-  disabled: boolean
+  onSelectVote?: (vote: VoteChoice) => void
+  disabled?: boolean
   reveal: boolean
   revealedModels?: {
     answer1Model: string
@@ -33,10 +33,29 @@ export function ResponsePair({
   round,
   selectedVote,
   onSelectVote,
-  disabled,
+  disabled = false,
   reveal,
   revealedModels,
 }: ResponsePairProps) {
+  const canSelect = Boolean(onSelectVote) && !disabled
+  const cardAClassName =
+    selectedVote === 'modelA'
+      ? 'response-card response-card--selected'
+      : 'response-card'
+  const cardBClassName =
+    selectedVote === 'modelB'
+      ? 'response-card response-card--selected'
+      : 'response-card'
+
+  function handleCardSelect(vote: VoteChoice) {
+    const selectedText = window.getSelection()?.toString().trim()
+    if (selectedText) {
+      return
+    }
+
+    onSelectVote?.(vote)
+  }
+
   return (
     <section className="duel-grid" aria-live="polite">
       <div className="response-column">
@@ -48,13 +67,11 @@ export function ResponsePair({
         </div>
         <button
           type="button"
-          className={
-            selectedVote === 'modelA'
-              ? 'response-card response-card--selected'
-              : 'response-card'
-          }
+          className={canSelect ? cardAClassName : `${cardAClassName} response-card--static`}
           disabled={disabled}
-          onClick={() => onSelectVote('modelA')}
+          onClick={canSelect ? () => handleCardSelect('modelA') : undefined}
+          aria-disabled={!canSelect}
+          tabIndex={canSelect ? 0 : -1}
           aria-label="Select model 1"
         >
           <div className="response-card__content">{renderMarkdown(round.answerA)}</div>
@@ -70,13 +87,11 @@ export function ResponsePair({
         </div>
         <button
           type="button"
-          className={
-            selectedVote === 'modelB'
-              ? 'response-card response-card--selected'
-              : 'response-card'
-          }
+          className={canSelect ? cardBClassName : `${cardBClassName} response-card--static`}
           disabled={disabled}
-          onClick={() => onSelectVote('modelB')}
+          onClick={canSelect ? () => handleCardSelect('modelB') : undefined}
+          aria-disabled={!canSelect}
+          tabIndex={canSelect ? 0 : -1}
           aria-label="Select model 2"
         >
           <div className="response-card__content">{renderMarkdown(round.answerB)}</div>

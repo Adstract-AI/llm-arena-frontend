@@ -4,7 +4,8 @@ import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 
 const navItems = [
-  { to: '/arena', label: 'Arena' },
+  { to: '/chat', label: 'Chat' },
+  { to: '/arena', label: 'Rate Models' },
   { to: '/leaderboard', label: 'Leaderboard' },
   { to: '/about', label: 'About' },
 ]

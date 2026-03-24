@@ -1,10 +1,17 @@
 export type VoteChoice = 'modelA' | 'modelB' | 'bothGood' | 'bothBad'
 
-export interface ArenaRound {
-  roundId: string
+export interface ArenaTurn {
+  turnNumber: number
   prompt: string
   answerA: string
   answerB: string
+}
+
+export interface ArenaBattle {
+  battleId: string
+  status: string
+  canVote: boolean
+  turns: ArenaTurn[]
 }
 
 export interface VoteOutcome {
