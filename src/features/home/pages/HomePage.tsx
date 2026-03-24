@@ -7,7 +7,7 @@ export function HomePage() {
       <h2 className="hero-title">Decide which AI model performed better.</h2>
       <p className="hero-copy">
         Compare models in Arena or jump into direct Chat mode. Evaluate anonymous
-        responses, vote in seconds, and see transparent results after each decision.
+        conversations, vote on the full exchange, and see transparent results after each decision.
       </p>
 
       <div className="hero-actions">
@@ -25,18 +25,18 @@ export function HomePage() {
       <div className="home-grid" aria-label="How it works">
         <article className="info-card">
           <p className="info-card__kicker">Step 1</p>
-          <h3>Anonymous Comparison</h3>
+          <h3>Anonymous Arena Chat</h3>
           <p>
-            Send one prompt and compare two side-by-side answers with hidden model
-            identities, so decisions stay focused on quality.
+            Start one arena conversation and compare two side-by-side model threads
+            with hidden identities, so decisions stay focused on quality.
           </p>
         </article>
         <article className="info-card">
           <p className="info-card__kicker">Step 2</p>
           <h3>Quick Voting + Reveal</h3>
           <p>
-            Vote Model 1, Model 2, both, or neither. After voting, MakArena reveals
-            which models produced each answer.
+            Continue for multiple turns if needed, then vote Model 1, Model 2, both,
+            or neither. After voting, MakArena reveals which models were behind the conversation.
           </p>
         </article>
         <article className="info-card">

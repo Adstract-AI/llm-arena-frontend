@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded'
 import SendRoundedIcon from '@mui/icons-material/SendRounded'
 import ReactMarkdown from 'react-markdown'
@@ -223,23 +224,56 @@ export function ChatPage() {
 
               {isModelMenuOpen && !modelControlDisabled ? (
                 <ul className="chat-composer__model-menu" role="listbox" aria-label="Choose model">
-                  {models.map((model) => (
-                    <li key={model.name}>
+                  <li className="chat-composer__model-menu-title" aria-hidden="true">
+                    Select Model
+                  </li>
+                  {models.map((model) => {
+                    const tooltipId = `chat-model-info-${model.name.replace(/[^a-zA-Z0-9-_]/g, '-')}`
+
+                    return (
+                    <li
+                      key={model.name}
+                      className={
+                        model.name === selectedModelName
+                          ? 'chat-composer__model-option-row chat-composer__model-option-row--selected'
+                          : 'chat-composer__model-option-row'
+                      }
+                    >
                       <button
                         type="button"
-                        className={
-                          model.name === selectedModelName
-                            ? 'chat-composer__model-option chat-composer__model-option--selected'
-                            : 'chat-composer__model-option'
-                        }
+                        className="chat-composer__model-option"
                         onClick={() => selectModel(model.name)}
                         role="option"
                         aria-selected={model.name === selectedModelName}
                       >
-                        {model.name}
+                        <span className="chat-composer__model-option-label">{model.name}</span>
                       </button>
+                      <span className="chat-composer__model-info-wrap">
+                        <button
+                          type="button"
+                          className="chat-composer__model-info"
+                          aria-label={`About ${model.name}`}
+                          aria-describedby={tooltipId}
+                          onClick={(event) => {
+                            event.stopPropagation()
+                          }}
+                        >
+                          <InfoOutlinedIcon
+                            aria-hidden="true"
+                            className="chat-composer__model-info-icon"
+                          />
+                        </button>
+                        <span
+                          id={tooltipId}
+                          role="tooltip"
+                          className="chat-composer__model-tooltip"
+                        >
+                          {model.description || 'No description available.'}
+                        </span>
+                      </span>
                     </li>
-                  ))}
+                    )
+                  })}
                 </ul>
               ) : null}
             </div>
