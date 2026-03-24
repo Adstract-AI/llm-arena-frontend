@@ -7,6 +7,7 @@ export function AboutPage() {
         <p className="about-lead">
           MakArena compares anonymous model answers for the same prompt, then
           uses user voting data to build transparent performance rankings.
+          You can also use Chat mode for direct conversations with a single model.
         </p>
       </header>
 

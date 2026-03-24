@@ -137,11 +137,16 @@ export function ChatPage() {
 
   return (
     <section className="chat-session">
-      <div className="page-card page-card--helper">
-        <p className="eyebrow">Chat</p>
-        <h2>Regular model chat session.</h2>
-        <p>Pick a model, start a session, and continue the conversation turn-by-turn.</p>
-      </div>
+      {messages.length === 0 ? (
+        <div className="page-card page-card--helper">
+          <p className="eyebrow">Chat</p>
+          <h2>Start a conversation.</h2>
+          <p>
+            Select a model and begin chatting. Get instant answers, explore topics,
+            and interact naturally.
+          </p>
+        </div>
+      ) : null}
 
       {error ? <p className="leaderboard-error">{error}</p> : null}
 
@@ -156,7 +161,11 @@ export function ChatPage() {
                   : 'chat-message chat-message--assistant'
               }
             >
-              <p className="chat-message__role">{message.role === 'user' ? 'You' : 'Assistant'}</p>
+              {message.role === 'assistant' ? (
+                <p className="chat-message__role chat-message__role--model">
+                  {selectedModelName || 'Model'}
+                </p>
+              ) : null}
               {message.role === 'assistant' ? (
                 <div className="chat-markdown">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -172,7 +181,9 @@ export function ChatPage() {
 
         {isSending ? (
           <article className="chat-message chat-message--assistant chat-message--loading">
-            <p className="chat-message__role">Assistant</p>
+            <p className="chat-message__role chat-message__role--model">
+              {selectedModelName || 'Model'}
+            </p>
             <div className="typing-indicator" aria-label="Generating response">
               <span />
               <span />

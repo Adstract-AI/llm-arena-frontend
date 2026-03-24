@@ -1,26 +1,39 @@
-import { httpPost } from '../../../shared/network/httpClient'
-import type { ArenaRound, VoteChoice, VoteOutcome } from '../types'
+import { httpGet, httpPost } from '../../../shared/network/httpClient'
+import type { ArenaBattle, ArenaTurn, VoteChoice, VoteOutcome } from '../types'
 
 type ApiSlot = 'A' | 'B'
 
-interface StartBattleResponse {
+interface BattleStateResponse {
   id: string
-  prompt: string
-  responses: Array<{
-    slot: ApiSlot
-    response_text: string
+  status: string
+  can_vote: boolean
+  turns: Array<{
+    turn_number: number
+    prompt: string
+    responses: Array<{
+      slot: ApiSlot
+      response_text: string
+    }>
   }>
 }
 
 interface VoteResponse {
   id: string
+  status?: string
   choice: string
   feedback: string | null
   winner_provider_name: string | null
   winner_model_name: string | null
-  responses: Array<{
+  responses?: Array<{
     slot: ApiSlot
     response_text: string
+    model_name: string
+    provider_name: string
+    provider_display_name: string
+    is_winner: boolean
+  }>
+  models?: Array<{
+    slot: string
     model_name: string
     provider_name: string
     provider_display_name: string
@@ -49,49 +62,97 @@ function toApiVotePayload(vote: VoteChoice): VoteRequestPayload {
   }
 }
 
-function getResponseBySlot<T extends { slot: ApiSlot }>(responses: T[], slot: ApiSlot): T | null {
-  return responses.find((response) => response.slot === slot) ?? null
+function getResponseBySlot<T extends { slot: string }>(
+  responses: T[] | undefined,
+  slot: ApiSlot | string,
+): T | null {
+  if (!responses) {
+    return null
+  }
+
+  const normalizedSlot = slot.toUpperCase()
+  return responses.find((response) => response.slot?.toUpperCase?.() === normalizedSlot) ?? null
 }
 
-export async function startRound(prompt: string): Promise<ArenaRound> {
-  const response = await httpPost<StartBattleResponse, { prompt: string }>(
-    '/api/arena/battles/',
-    { prompt },
-  )
-
-  const answerA = getResponseBySlot(response.responses, 'A')
-  const answerB = getResponseBySlot(response.responses, 'B')
+function toArenaTurn(turn: BattleStateResponse['turns'][number]): ArenaTurn {
+  const answerA = getResponseBySlot(turn.responses, 'A')
+  const answerB = getResponseBySlot(turn.responses, 'B')
 
   if (!answerA || !answerB) {
-    throw new Error('Battle response is missing answer slots A/B.')
+    throw new Error('Battle turn is missing answer slots A/B.')
   }
 
   return {
-    roundId: response.id,
-    prompt: response.prompt,
+    turnNumber: turn.turn_number,
+    prompt: turn.prompt,
     answerA: answerA.response_text,
     answerB: answerB.response_text,
   }
 }
 
-export async function submitVote(roundId: string, vote: VoteChoice): Promise<VoteOutcome> {
+function toArenaBattle(response: BattleStateResponse): ArenaBattle {
+  return {
+    battleId: response.id,
+    status: response.status,
+    canVote: response.can_vote,
+    turns: response.turns.map(toArenaTurn),
+  }
+}
+
+export async function startBattle(prompt: string): Promise<ArenaBattle> {
+  const response = await httpPost<BattleStateResponse, { prompt: string }>(
+    '/api/arena/battles/',
+    { prompt },
+  )
+
+  return toArenaBattle(response)
+}
+
+export async function continueBattle(battleId: string, prompt: string): Promise<ArenaBattle> {
+  const response = await httpPost<BattleStateResponse, { prompt: string }>(
+    `/api/arena/battles/${encodeURIComponent(battleId)}/turns/`,
+    { prompt },
+  )
+
+  return toArenaBattle(response)
+}
+
+export async function getBattleDetails(battleId: string): Promise<ArenaBattle> {
+  const response = await httpGet<BattleStateResponse>(
+    `/api/arena/battles/${encodeURIComponent(battleId)}/`,
+  )
+
+  return toArenaBattle(response)
+}
+
+export async function submitVote(battleId: string, vote: VoteChoice): Promise<VoteOutcome> {
   const response = await httpPost<VoteResponse, VoteRequestPayload>(
-    `/api/arena/battles/${encodeURIComponent(roundId)}/vote/`,
+    `/api/arena/battles/${encodeURIComponent(battleId)}/vote/`,
     toApiVotePayload(vote),
   )
 
-  const answerA = getResponseBySlot(response.responses, 'A')
-  const answerB = getResponseBySlot(response.responses, 'B')
-
-  if (!answerA || !answerB) {
-    throw new Error('Vote response is missing answer slots A/B.')
+  if (import.meta.env.DEV) {
+    console.groupCollapsed('[Arena][Vote] Raw response')
+    console.log('battleId:', battleId)
+    console.log('vote sent:', vote, toApiVotePayload(vote))
+    console.log('response:', response)
+    console.log('response.responses type:', typeof response.responses)
+    console.log('response.responses value:', response.responses)
+    console.groupEnd()
   }
 
-  const winnerResponse = response.responses.find((entry) => entry.is_winner)
+  const voteModels = Array.isArray(response.models) ? response.models : []
+  const voteResponses = Array.isArray(response.responses) ? response.responses : []
+  const voteEntries = voteModels.length > 0 ? voteModels : voteResponses
+  const answerA = getResponseBySlot(voteEntries, 'A') ?? voteEntries[0] ?? null
+  const answerB = getResponseBySlot(voteEntries, 'B') ?? voteEntries[1] ?? null
+
+  const winnerResponse = voteEntries.find((entry) => entry.is_winner)
+  const choice = response.choice?.toUpperCase()
   const winner =
-    winnerResponse?.slot === 'A'
+    winnerResponse?.slot === 'A' || choice === 'A'
       ? 'modelA'
-      : winnerResponse?.slot === 'B'
+      : winnerResponse?.slot === 'B' || choice === 'B'
         ? 'modelB'
         : 'tie'
 
@@ -106,15 +167,28 @@ export async function submitVote(roundId: string, vote: VoteChoice): Promise<Vot
             ? 'You marked both models as not good.'
             : 'Round saved successfully.'
 
+  if (import.meta.env.DEV) {
+    console.groupCollapsed('[Arena][Vote] Parsed mapping')
+    console.log('voteModels:', voteModels)
+    console.log('voteResponses:', voteResponses)
+    console.log('voteEntries used:', voteEntries)
+    console.log('answerA:', answerA)
+    console.log('answerB:', answerB)
+    console.log('winnerResponse:', winnerResponse)
+    console.log('winner:', winner)
+    console.log('choice (api):', response.choice)
+    console.groupEnd()
+  }
+
   return {
     winner,
     message,
     choice: vote,
     winnerModelName: response.winner_model_name,
     winnerProviderName: response.winner_provider_name,
-    answer1ModelName: answerA.model_name,
-    answer2ModelName: answerB.model_name,
-    answer1ProviderDisplayName: answerA.provider_display_name,
-    answer2ProviderDisplayName: answerB.provider_display_name,
+    answer1ModelName: answerA?.model_name ?? 'Model 1',
+    answer2ModelName: answerB?.model_name ?? 'Model 2',
+    answer1ProviderDisplayName: answerA?.provider_display_name ?? 'Unknown provider',
+    answer2ProviderDisplayName: answerB?.provider_display_name ?? 'Unknown provider',
   }
 }
