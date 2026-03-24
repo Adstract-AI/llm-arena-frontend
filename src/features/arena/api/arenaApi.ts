@@ -28,11 +28,25 @@ interface VoteResponse {
   }>
 }
 
-function toApiChoice(vote: VoteChoice): string {
-  if (vote === 'modelA') return 'A'
-  if (vote === 'modelB') return 'B'
-  if (vote === 'bothGood') return 'BOTH_GOOD'
-  return 'BOTH_BAD'
+interface VoteRequestPayload {
+  choice: string
+  feedback?: string
+}
+
+function toApiVotePayload(vote: VoteChoice): VoteRequestPayload {
+  if (vote === 'modelA') return { choice: 'A' }
+  if (vote === 'modelB') return { choice: 'B' }
+  if (vote === 'bothGood') {
+    return {
+      choice: 'tie',
+      feedback: 'Both responses were good.',
+    }
+  }
+
+  return {
+    choice: 'tie',
+    feedback: 'Both responses were bad.',
+  }
 }
 
 function getResponseBySlot<T extends { slot: ApiSlot }>(responses: T[], slot: ApiSlot): T | null {
@@ -61,9 +75,9 @@ export async function startRound(prompt: string): Promise<ArenaRound> {
 }
 
 export async function submitVote(roundId: string, vote: VoteChoice): Promise<VoteOutcome> {
-  const response = await httpPost<VoteResponse, { choice: string }>(
+  const response = await httpPost<VoteResponse, VoteRequestPayload>(
     `/api/arena/battles/${encodeURIComponent(roundId)}/vote/`,
-    { choice: toApiChoice(vote) },
+    toApiVotePayload(vote),
   )
 
   const answerA = getResponseBySlot(response.responses, 'A')
@@ -83,13 +97,13 @@ export async function submitVote(roundId: string, vote: VoteChoice): Promise<Vot
 
   const message =
     winner === 'modelA'
-      ? 'Answer 1 won this round.'
+      ? 'Model 1 won this round.'
       : winner === 'modelB'
-        ? 'Answer 2 won this round.'
+        ? 'Model 2 won this round.'
         : vote === 'bothGood'
-          ? 'You marked both answers as good.'
+          ? 'You marked both models as good.'
           : vote === 'bothBad'
-            ? 'You marked both answers as not good.'
+            ? 'You marked both models as not good.'
             : 'Round saved successfully.'
 
   return {

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { getLeaderboard } from '../api/leaderboardApi'
 import type { LeaderboardModel } from '../types'
 
@@ -19,7 +20,7 @@ interface SortState {
 
 const numericSortColumns: Array<{ key: NumericSortKey; label: string }> = [
   { key: 'eloScore', label: 'ELO' },
-  { key: 'nonTieWinRate', label: 'Win Rate %' },
+  { key: 'nonTieWinRate', label: 'Win Rate' },
   { key: 'matches', label: 'Matches' },
   { key: 'wins', label: 'Wins' },
   { key: 'losses', label: 'Losses' },
@@ -27,6 +28,7 @@ const numericSortColumns: Array<{ key: NumericSortKey; label: string }> = [
 ]
 
 export function LeaderboardPage() {
+  const navigate = useNavigate()
   const [models, setModels] = useState<LeaderboardModel[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -93,7 +95,7 @@ export function LeaderboardPage() {
         <div className="page-card page-card--helper">
           <p className="eyebrow">Leaderboard</p>
           <h2>Model ranking by community votes.</h2>
-          <p>Live ranking from backend metrics.</p>
+          <p>See how models are performing based on recent community comparisons.</p>
         </div>
 
         <div className="leaderboard-card">
@@ -134,7 +136,7 @@ export function LeaderboardPage() {
                           onClick={() => toggleNumericSort(column.key)}
                           aria-label={`Sort by ${column.label}`}
                         >
-                          {column.label}
+                          <span className="th-sort-btn__label">{column.label}</span>
                           <span className="th-sort-btn__marker">{directionMarker}</span>
                         </button>
                       </th>
@@ -144,20 +146,51 @@ export function LeaderboardPage() {
               </thead>
               <tbody>
                 {sortedModels.map((model, index) => (
-                  <tr key={model.id} className={`rank-${Math.min(index + 1, 3)}`}>
+                  <tr
+                    key={model.id}
+                    className={`rank-${Math.min(index + 1, 3)} leaderboard-row-link`}
+                    onClick={() => navigate(`/models/${encodeURIComponent(model.name)}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        navigate(`/models/${encodeURIComponent(model.name)}`)
+                      }
+                    }}
+                    tabIndex={0}
+                  >
                     <td className="rank-cell">
                       <span className={`rank-number ${index + 1 <= 3 ? 'top-rank' : ''}`}>
                         #{index + 1}
                       </span>
                     </td>
                     <td className="model-cell">
-                      {model.name}
+                      <Link
+                        to={`/models/${encodeURIComponent(model.name)}`}
+                        className="leaderboard-model-link"
+                      >
+                        <span className="leaderboard-model-link__label">{model.name}</span>
+                        <span className="leaderboard-model-tooltip" role="tooltip">
+                          {model.name}
+                        </span>
+                      </Link>
                       <span className="model-provider">{model.providerDisplayName}</span>
                     </td>
                     <td className="score-cell numeric-col">
                       <span className="score-badge">{model.eloScore.toFixed(2)}</span>
                     </td>
-                    <td className="winrate-cell numeric-col">{(model.nonTieWinRate * 100).toFixed(1)}%</td>
+                    <td className="winrate-cell numeric-col">
+                      <div className="winrate-meter">
+                        <span className="winrate-meter__value">
+                          {(model.nonTieWinRate * 100).toFixed(1)}%
+                        </span>
+                        <span className="winrate-meter__track" aria-hidden="true">
+                          <span
+                            className="winrate-meter__fill"
+                            style={{ width: `${Math.max(0, Math.min(model.nonTieWinRate * 100, 100))}%` }}
+                          />
+                        </span>
+                      </div>
+                    </td>
                     <td className="votes-cell numeric-col">{model.matches.toLocaleString()}</td>
                     <td className="votes-cell numeric-col">{model.wins.toLocaleString()}</td>
                     <td className="votes-cell numeric-col">{model.losses.toLocaleString()}</td>

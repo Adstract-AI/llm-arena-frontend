@@ -11,28 +11,28 @@ export function HomePage() {
       </p>
 
       <div className="hero-actions">
-        <Link to="/chatvote" className="btn btn--primary">
-            Start Comparing
+        <Link to="/arena" className="btn btn--primary">
+          Start Comparing
         </Link>
         <Link to="/about" className="btn btn--ghost">
           How It Works
         </Link>
       </div>
 
-        <div className="home-grid" aria-label="How it works">
-            <article className="info-card">
-                <h3>Anonymous Comparison</h3>
-                <p>Two answers. No model names. No bias.</p>
-            </article>
-            <article className="info-card">
-                <h3>Quick Voting</h3>
-                <p>Pick the better answer, both, or neither.</p>
-            </article>
-            <article className="info-card">
-                <h3>Results Revealed</h3>
-                <p>See which model performed better after voting.</p>
-            </article>
-        </div>
+      <div className="home-grid" aria-label="How it works">
+        <article className="info-card">
+          <h3>Anonymous Comparison</h3>
+          <p>Two answers. No model names. No bias.</p>
+        </article>
+        <article className="info-card">
+          <h3>Quick Voting</h3>
+          <p>Pick the better answer, both, or neither.</p>
+        </article>
+        <article className="info-card">
+          <h3>Results Revealed</h3>
+          <p>See which model performed better after voting.</p>
+        </article>
+      </div>
     </section>
   )
 }

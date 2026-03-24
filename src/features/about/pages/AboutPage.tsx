@@ -20,7 +20,7 @@ export function AboutPage() {
             Two anonymous answers are generated side by side.
           </li>
           <li>
-            The user votes: Answer 1, Answer 2, both good, or neither good.
+            The user votes: Model 1, Model 2, both good, or neither good.
           </li>
           <li>
             Model identities are revealed only after the vote is submitted.
@@ -37,13 +37,24 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section className="about-funding" aria-label="Funding">
-        <p className="about-funding__label">Funded by</p>
-        <img
-          src="/finki_logo.png"
-          alt="Faculty of Computer Science and Engineering logo"
-          className="about-funding__logo"
-        />
+      <section className="about-partners" aria-label="Funding and collaboration">
+        <div className="about-partners__block about-funding">
+          <p className="about-funding__label">Funded by</p>
+          <img
+            src="/finki_logo.png"
+            alt="Faculty of Computer Science and Engineering logo"
+            className="about-funding__logo"
+          />
+        </div>
+
+        <div className="about-partners__block about-collaboration">
+          <p className="about-funding__label">In collaboration with</p>
+          <p className="about-collaboration__title">Adstract</p>
+          <p className="about-collaboration__copy">
+            MakArena is developed as a collaboration between FINKI and the Adstract
+            team.
+          </p>
+        </div>
       </section>
     </section>
   )

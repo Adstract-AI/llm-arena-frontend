@@ -34,7 +34,7 @@ export function PromptInput({ onSubmit, loading, disabled = false }: PromptInput
           className="chat-composer__input"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          placeholder="Ask something to compare two model answers..."
+          placeholder="Ask to compare models..."
           disabled={loading || disabled}
         />
 

@@ -4,6 +4,7 @@ import { HomePage } from '../features/home/pages/HomePage'
 import { ArenaPage } from '../features/arena/pages/ArenaPage'
 import { AboutPage } from '../features/about/pages/AboutPage'
 import { LeaderboardPage } from '../features/leaderboard/pages/LeaderboardPage'
+import { ModelDetailsPage } from '../features/leaderboard/pages/ModelDetailsPage'
 
 export const router = createBrowserRouter([
   {
@@ -11,8 +12,9 @@ export const router = createBrowserRouter([
     element: <AppLayout />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: 'chatvote', element: <ArenaPage /> },
+      { path: 'arena', element: <ArenaPage /> },
       { path: 'leaderboard', element: <LeaderboardPage /> },
+      { path: 'models/:modelName', element: <ModelDetailsPage /> },
       { path: 'about', element: <AboutPage /> },
     ],
   },
