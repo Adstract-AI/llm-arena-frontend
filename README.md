@@ -76,7 +76,7 @@ The local [docker-compose.yml](/Users/itonkdong/Work/Fax/INSOK/llm-arena/llm-are
 This is useful when you want to run the backend separately or connect the frontend to an already running API.
 
 ## Production Docker
-For a production-style deployment image with Nginx, use [Dockerfile.render](/Users/itonkdong/Work/Fax/INSOK/llm-arena/llm-arena-frontend/Dockerfile.render#L1).
+For a production-style deployment image with Nginx, use [Dockerfile.deployment](/Users/itonkdong/Work/Fax/INSOK/llm-arena/llm-arena-frontend/Dockerfile.deployment#L1).
 
 It:
 - builds the Vite app

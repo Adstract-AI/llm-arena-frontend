@@ -15,8 +15,8 @@ ENV VITE_API_BASE_URL=
 
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY public/runtime-config.template.js /usr/share/nginx/html/runtime-config.template.js
-COPY docker-entrypoint.d/40-render-env.sh /docker-entrypoint.d/40-render-env.sh
-RUN chmod +x /docker-entrypoint.d/40-render-env.sh
+COPY docker-entrypoint.d/40-runtime-config.sh /docker-entrypoint.d/40-runtime-config.sh
+RUN chmod +x /docker-entrypoint.d/40-runtime-config.sh
 
 COPY --from=build /app/dist /usr/share/nginx/html
 
