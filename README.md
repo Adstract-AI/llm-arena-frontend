@@ -1,14 +1,16 @@
 # LLM Arena Frontend
 
 ## Overview
-This frontend is the user interface for LLM Arena, a blind evaluation platform for comparing large language models through human preference voting.
+This frontend is the user interface for LLM Arena, a platform for blind evaluation and direct exploration of large language models.
 
 The main flow is:
-- a user enters one prompt
+- a user enters a prompt to start a battle
 - the app requests a battle from the backend
-- two anonymous responses are shown as answer A and answer B
-- the user votes for the better answer, or marks them as equal
+- two anonymous answer streams are shown as answer A and answer B
+- the user can continue the same battle with additional prompts across multiple turns
+- the user votes on the full conversation transcript, or marks it as equal
 - the app can also show leaderboard and model-related views
+- the project also includes a direct chat mode where the user can choose a Vezilka model and chat with it normally
 
 The project is focused on evaluating Macedonian fine-tuned LLMs alongside global providers.
 
@@ -55,19 +57,21 @@ Example:
 ## Main Routes
 Useful local routes:
 - `http://localhost:5173/` for the home page
-- `http://localhost:5173/chatvote` for the arena voting page
+- `http://localhost:5173/arena` for the arena voting page
+- `http://localhost:5173/chat` for direct chat with a selected Vezilka model
 - `http://localhost:5173/leaderboard` for leaderboard results
 - `http://localhost:5173/about` for the about page
 
 ## Project Purpose
 This frontend is responsible for:
-- collecting the user prompt
-- displaying two anonymized model responses
-- sending votes back to the backend
+- collecting the opening and follow-up prompts for a battle
+- displaying two anonymized conversation streams
+- sending conversation-level votes back to the backend
+- letting users choose a Vezilka model and chat with it directly
 - showing loading and error states
 - presenting leaderboard and informational pages
 
-The UI is built around blind comparison, fairness, and a simple evaluation flow.
+The UI is built around blind comparison, fairness, a multi-turn evaluation flow, and a direct chat path for trying individual Vezilka models with more control.
 
 ## Local Compose Services
 The local [docker-compose.yml](/Users/itonkdong/Work/Fax/INSOK/llm-arena/llm-arena-frontend/docker-compose.yml) in this folder starts only:
@@ -83,3 +87,15 @@ It:
 - serves the compiled files with Nginx
 - supports React Router SPA refreshes
 - reads `VITE_API_BASE_URL` at container startup
+
+## Project Context
+This project was developed as part of the Vezilka project under the guidance of Assistant Teachers Ema Pandilova and Dimitar Peshevski.
+
+The student developers are:
+- Andrea Stevanoska
+- Viktor Kostadinoski
+- Gorazd Filipovski
+
+All contributors listed above are from the Faculty of Computer Science and Engineering (FINKI), Skopje.
+
+FINKI also developed, trained, and fine-tuned all Vezilka models used in this broader project context.
