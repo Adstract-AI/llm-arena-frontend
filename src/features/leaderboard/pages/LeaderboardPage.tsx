@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import SwapVertRoundedIcon from '@mui/icons-material/SwapVertRounded'
 import { Link, useNavigate } from 'react-router-dom'
 import { getLeaderboard } from '../api/leaderboardApi'
 import type { LeaderboardModel } from '../types'
@@ -10,6 +11,11 @@ type NumericSortKey =
   | 'wins'
   | 'losses'
   | 'ties'
+  | 'avgWinningTemp'
+  | 'avgWinningTopP'
+  | 'avgWinningTopK'
+  | 'avgWinningFreqPenalty'
+  | 'avgWinningPresPenalty'
 
 type SortDirection = 'asc' | 'desc'
 
@@ -18,13 +24,115 @@ interface SortState {
   direction: SortDirection
 }
 
-const numericSortColumns: Array<{ key: NumericSortKey; label: string }> = [
-  { key: 'eloScore', label: 'ELO' },
-  { key: 'nonTieWinRate', label: 'Win Rate' },
-  { key: 'matches', label: 'Matches' },
-  { key: 'wins', label: 'Wins' },
-  { key: 'losses', label: 'Losses' },
-  { key: 'ties', label: 'Ties' },
+interface NumericColumn {
+  key: NumericSortKey
+  label: ReactNode
+  sortLabel: string
+  tooltip?: string
+  render: (model: LeaderboardModel) => ReactNode
+}
+
+const defaultColumns: NumericColumn[] = [
+  {
+    key: 'eloScore',
+    label: 'ELO',
+    sortLabel: 'ELO',
+    render: (model) => <span className="score-badge">{model.eloScore.toFixed(2)}</span>,
+  },
+  {
+    key: 'nonTieWinRate',
+    label: 'Win Rate',
+    sortLabel: 'Win Rate',
+    render: (model) => (
+      <div className="winrate-meter">
+        <span className="winrate-meter__value">{(model.nonTieWinRate * 100).toFixed(1)}%</span>
+        <span className="winrate-meter__track" aria-hidden="true">
+          <span
+            className="winrate-meter__fill"
+            style={{ width: `${Math.max(0, Math.min(model.nonTieWinRate * 100, 100))}%` }}
+          />
+        </span>
+      </div>
+    ),
+  },
+  {
+    key: 'matches',
+    label: 'Matches',
+    sortLabel: 'Matches',
+    render: (model) => model.matches.toLocaleString(),
+  },
+  {
+    key: 'wins',
+    label: 'Wins',
+    sortLabel: 'Wins',
+    render: (model) => model.wins.toLocaleString(),
+  },
+  {
+    key: 'losses',
+    label: 'Losses',
+    sortLabel: 'Losses',
+    render: (model) => model.losses.toLocaleString(),
+  },
+  {
+    key: 'ties',
+    label: 'Ties',
+    sortLabel: 'Ties',
+    render: (model) => model.ties.toLocaleString(),
+  },
+]
+
+const experimentalColumns: NumericColumn[] = [
+  {
+    key: 'eloScore',
+    label: 'ELO',
+    sortLabel: 'ELO',
+    render: (model) => <span className="score-badge">{model.eloScore.toFixed(2)}</span>,
+  },
+  {
+    key: 'avgWinningTemp',
+    label: 'Avg Temp',
+    sortLabel: 'Avg Temp',
+    tooltip: 'Average winning temperature',
+    render: (model) => model.avgWinningTemp.toFixed(2),
+  },
+  {
+    key: 'avgWinningTopP',
+    label: 'Avg Top-p',
+    sortLabel: 'Avg Top-p',
+    tooltip: 'Average winning top-p',
+    render: (model) => model.avgWinningTopP.toFixed(2),
+  },
+  {
+    key: 'avgWinningTopK',
+    label: 'Avg Top-k',
+    sortLabel: 'Avg Top-k',
+    tooltip: 'Average winning top-k',
+    render: (model) => model.avgWinningTopK.toFixed(0),
+  },
+  {
+    key: 'avgWinningFreqPenalty',
+    label: (
+      <span className="th-sort-btn__label-stack">
+        <span>Avg Freq</span>
+        <span>Penalty</span>
+      </span>
+    ),
+    sortLabel: 'Avg Freq Penalty',
+    tooltip: 'Average winning frequency penalty',
+    render: (model) => model.avgWinningFreqPenalty.toFixed(2),
+  },
+  {
+    key: 'avgWinningPresPenalty',
+    label: (
+      <span className="th-sort-btn__label-stack">
+        <span>Avg Pres</span>
+        <span>Penalty</span>
+      </span>
+    ),
+    sortLabel: 'Avg Pres Penalty',
+    tooltip: 'Average winning presence penalty',
+    render: (model) => model.avgWinningPresPenalty.toFixed(2),
+  },
 ]
 
 export function LeaderboardPage() {
@@ -33,6 +141,9 @@ export function LeaderboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sort, setSort] = useState<SortState>({ key: 'eloScore', direction: 'desc' })
+  const [showExperimentalMetrics, setShowExperimentalMetrics] = useState(false)
+
+  const numericColumns = showExperimentalMetrics ? experimentalColumns : defaultColumns
 
   const sortedModels = useMemo(() => {
     return [...models].sort((a, b) => {
@@ -40,6 +151,17 @@ export function LeaderboardPage() {
       return (a[sort.key] - b[sort.key]) * direction
     })
   }, [models, sort])
+
+  useEffect(() => {
+    if (numericColumns.some((column) => column.key === sort.key)) {
+      return
+    }
+
+    setSort({
+      key: numericColumns[0]?.key ?? 'eloScore',
+      direction: 'desc',
+    })
+  }, [numericColumns, sort.key])
 
   function toggleNumericSort(key: NumericSortKey) {
     setSort((previous) => {
@@ -109,6 +231,30 @@ export function LeaderboardPage() {
         {error ? <p className="leaderboard-error">{error}</p> : null}
 
         {!isLoading && !error && models.length > 0 ? (
+          <>
+          <div className="leaderboard-card__toolbar">
+            <button
+              type="button"
+              className={
+                showExperimentalMetrics
+                  ? 'leaderboard-view-toggle leaderboard-view-toggle--active'
+                  : 'leaderboard-view-toggle'
+              }
+              onClick={() => setShowExperimentalMetrics((previous) => !previous)}
+              aria-label={
+                showExperimentalMetrics
+                  ? 'Show standard leaderboard metrics'
+                  : 'Show experimental leaderboard metrics'
+              }
+              title={
+                showExperimentalMetrics
+                  ? 'Show standard leaderboard metrics'
+                  : 'Show experimental leaderboard metrics'
+              }
+            >
+              <SwapVertRoundedIcon fontSize="inherit" />
+            </button>
+          </div>
           <div className="leaderboard-table-wrap">
             <table className="leaderboard-table" aria-label="Model leaderboard">
               <colgroup>
@@ -125,7 +271,7 @@ export function LeaderboardPage() {
                 <tr>
                   <th className="rank-col">Rank</th>
                   <th className="model-col">Model</th>
-                  {numericSortColumns.map((column) => {
+                  {numericColumns.map((column) => {
                     const active = sort.key === column.key
                     const directionMarker = active ? (sort.direction === 'desc' ? '↓' : '↑') : ''
                     return (
@@ -134,9 +280,18 @@ export function LeaderboardPage() {
                           type="button"
                           className={active ? 'th-sort-btn th-sort-btn--active' : 'th-sort-btn'}
                           onClick={() => toggleNumericSort(column.key)}
-                          aria-label={`Sort by ${column.label}`}
+                          aria-label={`Sort by ${column.sortLabel}`}
                         >
-                          <span className="th-sort-btn__label">{column.label}</span>
+                          <span className="th-sort-btn__label">
+                            {column.label}
+                            {column.tooltip ? (
+                              <span className="leaderboard-header-tooltip-wrap">
+                                <span className="leaderboard-header-tooltip" role="tooltip">
+                                  {column.tooltip}
+                                </span>
+                              </span>
+                            ) : null}
+                          </span>
                           <span className="th-sort-btn__marker">{directionMarker}</span>
                         </button>
                       </th>
@@ -176,30 +331,26 @@ export function LeaderboardPage() {
                       <span className="model-provider">{model.providerDisplayName}</span>
                     </td>
                     <td className="score-cell numeric-col">
-                      <span className="score-badge">{model.eloScore.toFixed(2)}</span>
+                      {numericColumns[0].render(model)}
                     </td>
-                    <td className="winrate-cell numeric-col">
-                      <div className="winrate-meter">
-                        <span className="winrate-meter__value">
-                          {(model.nonTieWinRate * 100).toFixed(1)}%
-                        </span>
-                        <span className="winrate-meter__track" aria-hidden="true">
-                          <span
-                            className="winrate-meter__fill"
-                            style={{ width: `${Math.max(0, Math.min(model.nonTieWinRate * 100, 100))}%` }}
-                          />
-                        </span>
-                      </div>
-                    </td>
-                    <td className="votes-cell numeric-col">{model.matches.toLocaleString()}</td>
-                    <td className="votes-cell numeric-col">{model.wins.toLocaleString()}</td>
-                    <td className="votes-cell numeric-col">{model.losses.toLocaleString()}</td>
-                    <td className="votes-cell numeric-col">{model.ties.toLocaleString()}</td>
+                    {numericColumns.slice(1).map((column) => (
+                      <td
+                        key={column.key}
+                        className={
+                          showExperimentalMetrics
+                            ? 'votes-cell numeric-col leaderboard-value-cell'
+                            : `${column.key === 'nonTieWinRate' ? 'winrate-cell' : 'votes-cell'} numeric-col`
+                        }
+                      >
+                        {column.render(model)}
+                      </td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
+          </>
         ) : !isLoading && !error && models.length === 0 ? (
           <p className="leaderboard-note">No models in leaderboard yet.</p>
         ) : null}

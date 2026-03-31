@@ -8,6 +8,11 @@ export interface LeaderboardModel {
   ties: number
   nonTieWinRate: number
   eloScore: number
+  avgWinningTemp: number
+  avgWinningTopP: number
+  avgWinningTopK: number
+  avgWinningFreqPenalty: number
+  avgWinningPresPenalty: number
 }
 
 export interface ModelDetails {

@@ -55,6 +55,11 @@ export async function getLeaderboard(): Promise<LeaderboardModel[]> {
     wins: model.wins,
     losses: model.losses,
     ties: model.ties,
+    avgWinningTemp: 0,
+    avgWinningTopP: 0,
+    avgWinningTopK: 0,
+    avgWinningFreqPenalty: 0,
+    avgWinningPresPenalty: 0,
   }))
 }
 

@@ -6,6 +6,7 @@ import { ChatPage } from '../features/chat/pages/ChatPage'
 import { AboutPage } from '../features/about/pages/AboutPage'
 import { LeaderboardPage } from '../features/leaderboard/pages/LeaderboardPage'
 import { ModelDetailsPage } from '../features/leaderboard/pages/ModelDetailsPage'
+import { ExperimentalArenaPage } from '../features/experimentalArena/pages/ExperimentalArenaPage'
 
 export const router = createBrowserRouter([
   {
@@ -14,6 +15,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'arena', element: <ArenaPage /> },
+      { path: 'experimental', element: <ExperimentalArenaPage /> },
       { path: 'chat', element: <ChatPage /> },
       { path: 'leaderboard', element: <LeaderboardPage /> },
       { path: 'models/:modelName', element: <ModelDetailsPage /> },
