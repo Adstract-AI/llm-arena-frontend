@@ -2,7 +2,7 @@ import type { VoteOutcome } from '../arena/types'
 
 export type ExperimentalModelMode = 'same' | 'different'
 export type ExperimentalParameterMode = 'random' | 'same'
-export type ExperimentalDistributionType = 'uniform' | 'normal' | 'triangular'
+export type ExperimentalDistributionType = 'uniform' | 'normal' | 'beta'
 export type ExperimentalParameterKey =
   | 'temperature'
   | 'topP'
@@ -27,11 +27,11 @@ export interface ExperimentalSetup {
 }
 
 export interface ExperimentalParameterValues {
-  temperature: number
-  topP: number
-  topK: number
-  frequencyPenalty: number
-  presencePenalty: number
+  temperature: number | null
+  topP: number | null
+  topK: number | null
+  frequencyPenalty: number | null
+  presencePenalty: number | null
 }
 
 export interface ExperimentalParameterReveal {
@@ -39,6 +39,28 @@ export interface ExperimentalParameterReveal {
   answer2: ExperimentalParameterValues
 }
 
+export interface ExperimentalVoteParameterResult {
+  enabled: boolean
+  distribution: string | null
+  answer1Value: number | null
+  answer2Value: number | null
+}
+
+export interface ExperimentalVoteParameterResults {
+  temperature: ExperimentalVoteParameterResult
+  topP: ExperimentalVoteParameterResult
+  topK: ExperimentalVoteParameterResult
+  frequencyPenalty: ExperimentalVoteParameterResult
+  presencePenalty: ExperimentalVoteParameterResult
+}
+
+export interface ExperimentalResultDetails {
+  modelMode: 'same_model' | 'different_models'
+  shareValuesAcrossModels: boolean
+  parameters: ExperimentalVoteParameterResults
+}
+
 export interface ExperimentalVoteOutcome extends VoteOutcome {
   parameters: ExperimentalParameterReveal
+  experiment: ExperimentalResultDetails
 }

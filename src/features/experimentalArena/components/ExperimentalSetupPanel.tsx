@@ -1,3 +1,4 @@
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import type {
   ExperimentalDistributionType,
   ExperimentalModelMode,
@@ -22,34 +23,28 @@ interface ExperimentalSetupPanelProps {
 const modelModeOptions: Array<{
   value: ExperimentalModelMode
   label: string
-  helper: string
 }> = [
   {
     value: 'same',
     label: 'Same model',
-    helper: 'Same model twice with different parameter settings',
   },
   {
     value: 'different',
     label: 'Different models',
-    helper: 'Compare two different models',
   },
 ]
 
 const parameterModeOptions: Array<{
   value: ExperimentalParameterMode
   label: string
-  helper: string
 }> = [
   {
     value: 'random',
     label: 'Random parameters',
-    helper: 'Each response uses random settings',
   },
   {
     value: 'same',
     label: 'Same parameters',
-    helper: 'Both responses use the same settings',
   },
 ]
 
@@ -57,11 +52,26 @@ const parameterControlRows: Array<{
   key: ExperimentalParameterKey
   label: string
 }> = [
-  { key: 'temperature', label: 'Temperature' },
-  { key: 'topP', label: 'Top-p' },
-  { key: 'topK', label: 'Top-k' },
-  { key: 'frequencyPenalty', label: 'Frequency penalty' },
-  { key: 'presencePenalty', label: 'Presence penalty' },
+  {
+    key: 'temperature',
+    label: 'Temperature',
+  },
+  {
+    key: 'topP',
+    label: 'Top-p',
+  },
+  {
+    key: 'topK',
+    label: 'Top-k',
+  },
+  {
+    key: 'frequencyPenalty',
+    label: 'Frequency penalty',
+  },
+  {
+    key: 'presencePenalty',
+    label: 'Presence penalty',
+  },
 ]
 
 const distributionOptions: Array<{
@@ -70,7 +80,79 @@ const distributionOptions: Array<{
 }> = [
   { value: 'uniform', label: 'Uniform' },
   { value: 'normal', label: 'Normal' },
-  { value: 'triangular', label: 'Triangular' },
+  { value: 'beta', label: 'Beta' },
+]
+
+const setupTooltipSections: Array<{
+  title: string
+  items: Array<{ title?: string; body: string }>
+}> = [
+  {
+    title: 'Model selection',
+    items: [
+      {
+        title: 'Same model',
+        body: 'Runs the same model twice to compare how different parameter settings affect the response.',
+      },
+      {
+        title: 'Different models',
+        body: 'Compares two different models on the same prompt.',
+      },
+    ],
+  },
+  {
+    title: 'Parameters',
+    items: [
+      {
+        title: 'Random parameters',
+        body: 'Each response uses independently sampled parameter values.',
+      },
+      {
+        title: 'Same parameters',
+        body: 'Both responses use identical parameter settings.',
+      },
+      {
+        title: 'Temperature',
+        body: 'Controls randomness. Lower values make responses more focused, higher values make them more creative.',
+      },
+      {
+        title: 'Top-p',
+        body: 'Limits token selection to the most probable tokens within a cumulative probability threshold.',
+      },
+      {
+        title: 'Top-k',
+        body: 'Limits token selection to the top K most likely options.',
+      },
+      {
+        title: 'Frequency penalty',
+        body: 'Reduces repetition by penalizing tokens that appear frequently in the response.',
+      },
+      {
+        title: 'Presence penalty',
+        body: 'Encourages introducing new topics by penalizing tokens that have already appeared.',
+      },
+    ],
+  },
+  {
+    title: 'Distributions',
+    items: [
+      {
+        body: 'Defines how parameter values are sampled for each run.',
+      },
+      {
+        title: 'Uniform',
+        body: 'Values are sampled evenly across a defined range.',
+      },
+      {
+        title: 'Normal',
+        body: 'Values are sampled around a central mean, with most values near the center and fewer at the extremes.',
+      },
+      {
+        title: 'Beta',
+        body: 'Values are sampled within a bounded range with flexible skew, allowing bias toward lower or higher values.',
+      },
+    ],
+  },
 ]
 
 export function ExperimentalSetupPanel({
@@ -85,7 +167,44 @@ export function ExperimentalSetupPanel({
   return (
     <aside className="experimental-setup-card" aria-label="Experimental setup">
       <div className="experimental-setup-card__header">
-        <p className="eyebrow">Experimental Arena</p>
+        <div className="experimental-setup-card__header-top">
+          <p className="eyebrow">Experimental Arena</p>
+          <span className="model-section-info-wrap experimental-setup-card__info-wrap">
+            <button
+              type="button"
+              className="model-section-info"
+              aria-label="More info about experimental setup"
+              aria-describedby="experimental-setup-tooltip"
+            >
+              <InfoOutlinedIcon aria-hidden="true" className="model-section-info__icon" />
+            </button>
+            <span
+              id="experimental-setup-tooltip"
+              role="tooltip"
+              className="model-section-tooltip experimental-setup-card__tooltip"
+            >
+              {setupTooltipSections.map((section) => (
+                <span
+                  key={section.title}
+                  className="experimental-setup-card__tooltip-section"
+                >
+                  <span className="experimental-setup-card__tooltip-title">
+                    {section.title}
+                  </span>
+                  {section.items.map((detail) => (
+                    <span
+                      key={`${detail.title ?? 'note'}-${detail.body}`}
+                      className="model-section-tooltip__item"
+                    >
+                      {detail.title ? <strong>{detail.title}:</strong> : null}{' '}
+                      {detail.body}
+                    </span>
+                  ))}
+                </span>
+              ))}
+            </span>
+          </span>
+        </div>
         <h3>Configure the setup, then start</h3>
       </div>
 
@@ -111,8 +230,9 @@ export function ExperimentalSetupPanel({
               }
               onClick={() => onModelModeChange(option.value)}
             >
-              <span className="experimental-toggle__title">{option.label}</span>
-              <span className="experimental-toggle__helper">{option.helper}</span>
+              <span className="experimental-toggle__title-row">
+                <span className="experimental-toggle__title">{option.label}</span>
+              </span>
             </button>
           ))}
         </div>
@@ -145,8 +265,9 @@ export function ExperimentalSetupPanel({
                 }
                 onClick={() => onParameterModeChange(option.value)}
               >
-                <span className="experimental-toggle__title">{option.label}</span>
-                <span className="experimental-toggle__helper">{option.helper}</span>
+                <span className="experimental-toggle__title-row">
+                  <span className="experimental-toggle__title">{option.label}</span>
+                </span>
               </button>
             ))}
           </div>
@@ -160,8 +281,10 @@ export function ExperimentalSetupPanel({
               <div key={parameter.key} className="experimental-parameter-row">
                 <div className="experimental-parameter-row__main">
                   <div className="experimental-parameter-row__copy">
-                    <span className="experimental-parameter-row__label">
-                      {parameter.label}
+                    <span className="experimental-parameter-row__label-row">
+                      <span className="experimental-parameter-row__label">
+                        {parameter.label}
+                      </span>
                     </span>
                   </div>
 
@@ -190,8 +313,10 @@ export function ExperimentalSetupPanel({
                 {setting.enabled ? (
                   <div className="experimental-parameter-row__expanded">
                     <label className="experimental-parameter-row__field">
-                      <span className="experimental-parameter-row__field-label">
-                        Distribution
+                      <span className="experimental-parameter-row__field-label-row">
+                        <span className="experimental-parameter-row__field-label">
+                          Distribution
+                        </span>
                       </span>
                       <select
                         className="experimental-select"

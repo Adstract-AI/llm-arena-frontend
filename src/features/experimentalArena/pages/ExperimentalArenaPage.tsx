@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded'
 import { Link } from 'react-router-dom'
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
@@ -16,9 +16,8 @@ import type { ArenaBattle, ArenaTurn, VoteChoice } from '../../arena/types'
 import { ExperimentalSetupPanel } from '../components/ExperimentalSetupPanel'
 import type {
   ExperimentalDistributionType,
-  ExperimentalParameterReveal,
+  ExperimentalParameterKey,
   ExperimentalParameterSettings,
-  ExperimentalParameterValues,
   ExperimentalSetup,
   ExperimentalVoteOutcome,
 } from '../types'
@@ -39,14 +38,32 @@ const DEFAULT_SETUP: ExperimentalSetup = {
   parameters: DEFAULT_PARAMETER_SETTINGS,
 }
 
+const PARAMETER_LABELS: Record<ExperimentalParameterKey, string> = {
+  temperature: 'temperature',
+  topP: 'top-p',
+  topK: 'top-k',
+  frequencyPenalty: 'frequency penalty',
+  presencePenalty: 'presence penalty',
+}
+
 function formatSetupSummary(setup: ExperimentalSetup): string {
-  return setup.modelMode === 'same'
+  const baseSummary = setup.modelMode === 'same'
     ? setup.parameterMode === 'same'
       ? 'Same model · same parameters'
       : 'Same model · random parameters'
     : setup.parameterMode === 'same'
     ? 'Different models · same parameters'
     : 'Different models · random parameters'
+
+  const enabledParameters = Object.entries(setup.parameters)
+    .filter(([, parameter]) => parameter.enabled)
+    .map(([key]) => PARAMETER_LABELS[key as ExperimentalParameterKey])
+
+  if (enabledParameters.length === 0) {
+    return `${baseSummary} · none exposed`
+  }
+
+  return `${baseSummary} · ${enabledParameters.join(', ')}`
 }
 
 function cloneDefaultParameterSettings(): ExperimentalParameterSettings {
@@ -67,43 +84,11 @@ function hasEnabledParameter(setup: ExperimentalSetup): boolean {
   return Object.values(setup.parameters).some((parameter) => parameter.enabled)
 }
 
-function createMockParameterReveal(setup: ExperimentalSetup): ExperimentalParameterReveal {
-  const profileA: ExperimentalParameterValues = {
-    temperature: 0.35,
-    topP: 0.9,
-    topK: 40,
-    frequencyPenalty: 0.2,
-    presencePenalty: 0.05,
-  }
-  const profileB: ExperimentalParameterValues = {
-    temperature: 0.78,
-    topP: 0.96,
-    topK: 60,
-    frequencyPenalty: 0.45,
-    presencePenalty: 0.22,
-  }
-  const sharedProfile: ExperimentalParameterValues = {
-    temperature: 0.55,
-    topP: 0.92,
-    topK: 50,
-    frequencyPenalty: 0.15,
-    presencePenalty: 0.1,
+function formatParameterValue(value: number | null): string {
+  if (value === null) {
+    return 'Not used'
   }
 
-  if (setup.modelMode === 'different' && setup.parameterMode === 'same') {
-    return {
-      answer1: sharedProfile,
-      answer2: sharedProfile,
-    }
-  }
-
-  return {
-    answer1: profileA,
-    answer2: profileB,
-  }
-}
-
-function formatParameterValue(value: number): string {
   return Number.isInteger(value) ? `${value}` : value.toFixed(2)
 }
 
@@ -169,7 +154,7 @@ export function ExperimentalArenaPage() {
     try {
       const nextBattle = battle
         ? await continueExperimentalBattle(battle.battleId, prompt)
-        : await startExperimentalBattle(prompt)
+        : await startExperimentalBattle(prompt, confirmedSetup)
       await syncBattleState(nextBattle)
     } catch (submissionError) {
       setError(
@@ -193,10 +178,8 @@ export function ExperimentalArenaPage() {
 
     try {
       const outcome = await submitExperimentalVote(battle.battleId, selectedVote)
-      setVoteOutcome({
-        ...outcome,
-        parameters: createMockParameterReveal(confirmedSetup),
-      })
+      setVoteOutcome(outcome)
+      setIsShowingParameters(true)
       await syncBattleState(battle)
     } catch (voteError) {
       setError(
@@ -278,6 +261,41 @@ export function ExperimentalArenaPage() {
       </div>
     )
   }
+
+  const experimentalResultRows = voteOutcome
+    ? [
+        {
+          key: 'temperature',
+          label: 'Temperature',
+          answer1Value: voteOutcome.experiment.parameters.temperature.answer1Value,
+          answer2Value: voteOutcome.experiment.parameters.temperature.answer2Value,
+        },
+        {
+          key: 'topP',
+          label: 'Top-p',
+          answer1Value: voteOutcome.experiment.parameters.topP.answer1Value,
+          answer2Value: voteOutcome.experiment.parameters.topP.answer2Value,
+        },
+        {
+          key: 'topK',
+          label: 'Top-k',
+          answer1Value: voteOutcome.experiment.parameters.topK.answer1Value,
+          answer2Value: voteOutcome.experiment.parameters.topK.answer2Value,
+        },
+        {
+          key: 'frequencyPenalty',
+          label: 'Frequency penalty',
+          answer1Value: voteOutcome.experiment.parameters.frequencyPenalty.answer1Value,
+          answer2Value: voteOutcome.experiment.parameters.frequencyPenalty.answer2Value,
+        },
+        {
+          key: 'presencePenalty',
+          label: 'Presence penalty',
+          answer1Value: voteOutcome.experiment.parameters.presencePenalty.answer1Value,
+          answer2Value: voteOutcome.experiment.parameters.presencePenalty.answer2Value,
+        },
+      ]
+    : []
 
   return (
     <section className={experimentalClassName}>
@@ -477,22 +495,12 @@ export function ExperimentalArenaPage() {
                 aria-hidden={!isShowingParameters}
               >
                 <div className="result-chip__parameters-panel">
-                  <span>Temperature</span>
-                  <strong>
-                    {formatParameterValue(voteOutcome.parameters.answer1.temperature)}
-                  </strong>
-                  <span>Top-p</span>
-                  <strong>{formatParameterValue(voteOutcome.parameters.answer1.topP)}</strong>
-                  <span>Top-k</span>
-                  <strong>{formatParameterValue(voteOutcome.parameters.answer1.topK)}</strong>
-                  <span>Frequency penalty</span>
-                  <strong>
-                    {formatParameterValue(voteOutcome.parameters.answer1.frequencyPenalty)}
-                  </strong>
-                  <span>Presence penalty</span>
-                  <strong>
-                    {formatParameterValue(voteOutcome.parameters.answer1.presencePenalty)}
-                  </strong>
+                  {experimentalResultRows.map((row) => (
+                    <Fragment key={row.key}>
+                      <span>{row.label}</span>
+                      <strong>{formatParameterValue(row.answer1Value)}</strong>
+                    </Fragment>
+                  ))}
                 </div>
               </div>
             </article>
@@ -539,22 +547,12 @@ export function ExperimentalArenaPage() {
                 aria-hidden={!isShowingParameters}
               >
                 <div className="result-chip__parameters-panel">
-                  <span>Temperature</span>
-                  <strong>
-                    {formatParameterValue(voteOutcome.parameters.answer2.temperature)}
-                  </strong>
-                  <span>Top-p</span>
-                  <strong>{formatParameterValue(voteOutcome.parameters.answer2.topP)}</strong>
-                  <span>Top-k</span>
-                  <strong>{formatParameterValue(voteOutcome.parameters.answer2.topK)}</strong>
-                  <span>Frequency penalty</span>
-                  <strong>
-                    {formatParameterValue(voteOutcome.parameters.answer2.frequencyPenalty)}
-                  </strong>
-                  <span>Presence penalty</span>
-                  <strong>
-                    {formatParameterValue(voteOutcome.parameters.answer2.presencePenalty)}
-                  </strong>
+                  {experimentalResultRows.map((row) => (
+                    <Fragment key={row.key}>
+                      <span>{row.label}</span>
+                      <strong>{formatParameterValue(row.answer2Value)}</strong>
+                    </Fragment>
+                  ))}
                 </div>
               </div>
             </article>
