@@ -13,6 +13,7 @@ interface BattleStateResponse {
     responses: Array<{
       slot: ApiSlot
       response_text: string
+      improvement_text?: string | null
     }>
   }>
 }
@@ -87,6 +88,8 @@ function toArenaTurn(turn: BattleStateResponse['turns'][number]): ArenaTurn {
     prompt: turn.prompt,
     answerA: answerA.response_text,
     answerB: answerB.response_text,
+    answerAImprovementText: answerA.improvement_text ?? null,
+    answerBImprovementText: answerB.improvement_text ?? null,
   }
 }
 

@@ -7,12 +7,16 @@ import {
   continueExperimentalBattle,
   getExperimentalBattleDetails,
   startExperimentalBattle,
+  submitExperimentalResponseImprovement,
   submitExperimentalVote,
 } from '../api/experimentalArenaApi'
 import { PromptInput } from '../../arena/components/PromptInput'
-import { ResponsePair } from '../../arena/components/ResponsePair'
 import { VotePanel } from '../../arena/components/VotePanel'
 import type { ArenaBattle, ArenaTurn, VoteChoice } from '../../arena/types'
+import {
+  EditableResponsePair,
+  type EditableResponseState,
+} from '../components/EditableResponsePair'
 import { ExperimentalSetupPanel } from '../components/ExperimentalSetupPanel'
 import type {
   ExperimentalDistributionType,
@@ -96,6 +100,23 @@ function getModelDetailsLink(modelName: string): string {
   return `/models/${encodeURIComponent(modelName)}`
 }
 
+type EditableResponseSide = 'A' | 'B'
+type ResponseEditMap = Record<string, EditableResponseState>
+
+function getResponseEditKey(turnNumber: number, side: EditableResponseSide): string {
+  return `${turnNumber}:${side}`
+}
+
+function createResponseState(originalResponse: string): EditableResponseState {
+  return {
+    originalResponse,
+    editedResponse: null,
+    draftResponse: originalResponse,
+    isEditing: false,
+    isShowingEdited: false,
+  }
+}
+
 export function ExperimentalArenaPage() {
   const [battle, setBattle] = useState<ArenaBattle | null>(null)
   const [voteOutcome, setVoteOutcome] = useState<ExperimentalVoteOutcome | null>(null)
@@ -113,6 +134,8 @@ export function ExperimentalArenaPage() {
   const [isEditingSetup, setIsEditingSetup] = useState(true)
   const [isShowingParameters, setIsShowingParameters] = useState(false)
   const [setupValidationMessage, setSetupValidationMessage] = useState<string | null>(null)
+  const [responseEdits, setResponseEdits] = useState<ResponseEditMap>({})
+  const [savingEditKey, setSavingEditKey] = useState<string | null>(null)
   const turns = battle?.turns ?? []
   const latestTurn = turns.length > 0 ? turns[turns.length - 1] : null
 
@@ -177,10 +200,10 @@ export function ExperimentalArenaPage() {
     setError(null)
 
     try {
-      const outcome = await submitExperimentalVote(battle.battleId, selectedVote)
-      setVoteOutcome(outcome)
+      const result = await submitExperimentalVote(battle.battleId, selectedVote)
+      setVoteOutcome(result.outcome)
       setIsShowingParameters(true)
-      await syncBattleState(battle)
+      setBattle(result.battle)
     } catch (voteError) {
       setError(
         voteError instanceof Error
@@ -218,6 +241,8 @@ export function ExperimentalArenaPage() {
     setIsEditingSetup(true)
     setIsShowingParameters(false)
     setSetupValidationMessage(null)
+    setResponseEdits({})
+    setSavingEditKey(null)
   }
 
   const experimentalClassName = [
@@ -230,9 +255,116 @@ export function ExperimentalArenaPage() {
     .filter(Boolean)
     .join(' ')
 
+  function getResponseState(
+    turn: ArenaTurn,
+    side: EditableResponseSide,
+  ): EditableResponseState {
+    const originalResponse = side === 'A' ? turn.answerA : turn.answerB
+    const editedResponse =
+      side === 'A' ? turn.answerAImprovementText : turn.answerBImprovementText
+    const savedState = responseEdits[getResponseEditKey(turn.turnNumber, side)]
+
+    return {
+      originalResponse,
+      editedResponse,
+      draftResponse:
+        savedState?.isEditing
+          ? savedState.draftResponse
+          : editedResponse ?? savedState?.draftResponse ?? originalResponse,
+      isEditing: savedState?.isEditing ?? false,
+      isShowingEdited: editedResponse ? (savedState?.isShowingEdited ?? false) : false,
+    }
+  }
+
+  function updateResponseState(
+    turn: ArenaTurn,
+    side: EditableResponseSide,
+    updater: (current: EditableResponseState) => EditableResponseState,
+  ) {
+    const key = getResponseEditKey(turn.turnNumber, side)
+    const originalResponse = side === 'A' ? turn.answerA : turn.answerB
+
+    setResponseEdits((current) => ({
+      ...current,
+      [key]: updater(current[key] ?? createResponseState(originalResponse)),
+    }))
+  }
+
+  function startEditing(turn: ArenaTurn, side: EditableResponseSide) {
+    updateResponseState(turn, side, (current) => ({
+      ...current,
+      draftResponse:
+        current.isEditing
+          ? current.draftResponse
+          : current.editedResponse ?? current.originalResponse,
+      isEditing: !current.isEditing,
+    }))
+  }
+
+  function updateDraft(turn: ArenaTurn, side: EditableResponseSide, value: string) {
+    updateResponseState(turn, side, (current) => ({
+      ...current,
+      draftResponse: value,
+    }))
+  }
+
+  async function submitEditedResponse(turn: ArenaTurn, side: EditableResponseSide) {
+    if (!battle) {
+      return
+    }
+
+    const key = getResponseEditKey(turn.turnNumber, side)
+    const currentState = getResponseState(turn, side)
+    setSavingEditKey(key)
+    setError(null)
+
+    try {
+      const nextBattle = await submitExperimentalResponseImprovement(
+        battle.battleId,
+        turn.turnNumber,
+        side,
+        currentState.draftResponse,
+      )
+      setBattle(nextBattle)
+      setResponseEdits((current) => ({
+        ...current,
+        [key]: {
+          ...currentState,
+          editedResponse: currentState.draftResponse,
+          draftResponse: currentState.draftResponse,
+          isEditing: false,
+          isShowingEdited: false,
+        },
+      }))
+    } catch (submissionError) {
+      setError(
+        submissionError instanceof Error
+          ? submissionError.message
+          : 'Could not save your edited response.',
+      )
+    } finally {
+      setSavingEditKey(null)
+    }
+  }
+
+  function toggleEditedResponse(turn: ArenaTurn, side: EditableResponseSide) {
+    updateResponseState(turn, side, (current) => {
+      if (!current.editedResponse) {
+        return current
+      }
+
+      return {
+        ...current,
+        isShowingEdited: !current.isShowingEdited,
+      }
+    })
+  }
+
   function renderTurn(turn: ArenaTurn) {
     const isLatestTurn = turn.turnNumber === latestTurn?.turnNumber
     const isVotingTurn = isLatestTurn && !voteOutcome && !isGenerating
+    const answerAState = getResponseState(turn, 'A')
+    const answerBState = getResponseState(turn, 'B')
 
     return (
       <div key={turn.turnNumber} className="arena-turn">
@@ -242,8 +374,7 @@ export function ExperimentalArenaPage() {
 
         <article className="chat-message chat-message--assistant chat-message--duel">
           <p className="chat-message__role">Responses</p>
-          <ResponsePair
-            round={turn}
+          <EditableResponsePair
             selectedVote={isVotingTurn ? selectedVote : null}
             onSelectVote={isVotingTurn ? setSelectedVote : undefined}
             disabled={isVoting}
@@ -256,6 +387,15 @@ export function ExperimentalArenaPage() {
                   }
                 : null
             }
+            canEditLatest={isLatestTurn && !voteOutcome && !isGenerating}
+            answerAIsSubmitting={savingEditKey === getResponseEditKey(turn.turnNumber, 'A')}
+            answerBIsSubmitting={savingEditKey === getResponseEditKey(turn.turnNumber, 'B')}
+            answerAState={answerAState}
+            answerBState={answerBState}
+            onStartEdit={(side) => startEditing(turn, side)}
+            onDraftChange={(side, value) => updateDraft(turn, side, value)}
+            onSubmitEdit={(side) => submitEditedResponse(turn, side)}
+            onToggleEdited={(side) => toggleEditedResponse(turn, side)}
           />
         </article>
       </div>

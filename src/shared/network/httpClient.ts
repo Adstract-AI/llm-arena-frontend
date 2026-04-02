@@ -47,3 +47,15 @@ export async function httpPost<TResponse, TBody extends object>(
     throw new Error(parseErrorMessage(error))
   }
 }
+
+export async function httpPatch<TResponse, TBody extends object>(
+  path: string,
+  body: TBody,
+): Promise<TResponse> {
+  try {
+    const response = await http.patch<TResponse>(path, body)
+    return response.data
+  } catch (error) {
+    throw new Error(parseErrorMessage(error))
+  }
+}

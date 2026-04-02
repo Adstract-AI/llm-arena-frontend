@@ -1,4 +1,4 @@
-import { httpGet, httpPost } from '../../../shared/network/httpClient'
+import { httpGet, httpPatch, httpPost } from '../../../shared/network/httpClient'
 import type { ArenaBattle, ArenaTurn, VoteChoice } from '../../arena/types'
 import type {
   ExperimentalSetup,
@@ -17,6 +17,7 @@ interface BattleStateResponse {
     responses: Array<{
       slot: ApiSlot
       response_text: string
+      improvement_text?: string | null
     }>
   }>
 }
@@ -46,11 +47,12 @@ interface VoteRequestPayload {
 
 interface VoteResponse {
   id: string
-  status?: string
+  status: string
   choice: string
   feedback: string | null
   winner_provider_name: string | null
   winner_model_name: string | null
+  can_vote?: boolean
   models?: Array<{
     slot: string
     model_name: string
@@ -65,6 +67,7 @@ interface VoteResponse {
       slot: string
       response_text: string
       is_winner: boolean
+      improvement_text?: string | null
     }>
   }>
   experiment: {
@@ -87,6 +90,15 @@ interface ApiExperimentParameter {
   slot_b_value: number | null
 }
 
+interface EditResponsePayload {
+  response_text: string
+}
+
+export interface ExperimentalVoteSubmitResult {
+  outcome: ExperimentalVoteOutcome
+  battle: ArenaBattle
+}
+
 function toApiVotePayload(vote: VoteChoice): VoteRequestPayload {
   if (vote === 'modelA') return { choice: 'A' }
   if (vote === 'modelB') return { choice: 'B' }
@@ -105,7 +117,7 @@ function toApiVotePayload(vote: VoteChoice): VoteRequestPayload {
 
 function getResponseBySlot<T extends { slot: string }>(
   responses: T[] | undefined,
-  slot: ApiSlot | string,
+  slot: string,
 ): T | null {
   if (!responses) {
     return null
@@ -115,9 +127,18 @@ function getResponseBySlot<T extends { slot: string }>(
   return responses.find((response) => response.slot?.toUpperCase?.() === normalizedSlot) ?? null
 }
 
-function toArenaTurn(turn: BattleStateResponse['turns'][number]): ArenaTurn {
-  const answerA = getResponseBySlot(turn.responses, 'A')
-  const answerB = getResponseBySlot(turn.responses, 'B')
+function toArenaTurn(
+  turn:
+    | BattleStateResponse['turns'][number]
+    | VoteResponse['turns'][number],
+): ArenaTurn {
+  const responses = turn.responses as Array<{
+    slot: string
+    response_text: string
+    improvement_text?: string | null
+  }>
+  const answerA = getResponseBySlot(responses, 'A')
+  const answerB = getResponseBySlot(responses, 'B')
 
   if (!answerA || !answerB) {
     throw new Error('Battle turn is missing answer slots A/B.')
@@ -128,6 +149,8 @@ function toArenaTurn(turn: BattleStateResponse['turns'][number]): ArenaTurn {
     prompt: turn.prompt,
     answerA: answerA.response_text,
     answerB: answerB.response_text,
+    answerAImprovementText: answerA.improvement_text ?? null,
+    answerBImprovementText: answerB.improvement_text ?? null,
   }
 }
 
@@ -136,6 +159,15 @@ function toArenaBattle(response: BattleStateResponse): ArenaBattle {
     battleId: response.id,
     status: response.status,
     canVote: response.can_vote,
+    turns: response.turns.map(toArenaTurn),
+  }
+}
+
+function toArenaBattleFromVote(response: VoteResponse): ArenaBattle {
+  return {
+    battleId: response.id,
+    status: response.status,
+    canVote: response.can_vote ?? false,
     turns: response.turns.map(toArenaTurn),
   }
 }
@@ -247,7 +279,7 @@ export async function getExperimentalBattleDetails(battleId: string): Promise<Ar
 export async function submitExperimentalVote(
   battleId: string,
   vote: VoteChoice,
-): Promise<ExperimentalVoteOutcome> {
+): Promise<ExperimentalVoteSubmitResult> {
   const response = await httpPost<VoteResponse, VoteRequestPayload>(
     `/api/arena/battles/${encodeURIComponent(battleId)}/vote/`,
     toApiVotePayload(vote),
@@ -270,6 +302,8 @@ export async function submitExperimentalVote(
         : 'tie'
 
   return {
+    battle: toArenaBattleFromVote(response),
+    outcome: {
     winner,
     message: toVoteMessage(winner, vote),
     choice: vote,
@@ -310,5 +344,22 @@ export async function submitExperimentalVote(
         ),
       },
     },
+    },
   }
+}
+
+export async function submitExperimentalResponseImprovement(
+  battleId: string,
+  turnNumber: number,
+  side: ApiSlot,
+  improvementText: string,
+): Promise<ArenaBattle> {
+  const response = await httpPatch<BattleStateResponse, EditResponsePayload>(
+    `/api/arena/battles/${encodeURIComponent(battleId)}/turns/${turnNumber}/responses/${side}/`,
+    {
+      response_text: improvementText,
+    },
+  )
+
+  return toArenaBattle(response)
 }
