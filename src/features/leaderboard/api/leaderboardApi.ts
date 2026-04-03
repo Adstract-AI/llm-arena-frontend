@@ -63,7 +63,9 @@ interface ModelDetailsApiResponse {
 }
 
 export async function getLeaderboard(): Promise<LeaderboardModel[]> {
-  const response = await httpGet<LeaderboardApiModel[]>('/api/arena/leaderboard/')
+  const response = await httpGet<LeaderboardApiModel[]>('/api/arena/leaderboard/', {
+    auth: false,
+  })
 
   return response.map((model) => ({
     id: `${model.provider_name}:${model.model_name}`,
@@ -92,6 +94,7 @@ export async function getLeaderboard(): Promise<LeaderboardModel[]> {
 export async function getModelDetails(modelName: string): Promise<ModelDetails> {
   const response = await httpGet<ModelDetailsApiResponse>(
     `/api/arena/models/${encodeURIComponent(modelName)}/`,
+    { auth: false },
   )
 
   return {

@@ -18,6 +18,8 @@ import {
   type EditableResponseState,
 } from '../components/EditableResponsePair'
 import { ExperimentalSetupPanel } from '../components/ExperimentalSetupPanel'
+import { useAuth } from '../../auth/context/AuthContext'
+import { AuthGateCard } from '../../auth/components/AuthGateCard'
 import type {
   ExperimentalDistributionType,
   ExperimentalParameterKey,
@@ -114,6 +116,7 @@ function createResponseState(originalResponse: string): EditableResponseState {
 }
 
 export function ExperimentalArenaPage() {
+  const { isAuthenticated, isInitializing } = useAuth()
   const [battle, setBattle] = useState<ArenaBattle | null>(null)
   const [voteOutcome, setVoteOutcome] = useState<ExperimentalVoteOutcome | null>(null)
   const [selectedVote, setSelectedVote] = useState<VoteChoice | null>(null)
@@ -435,6 +438,16 @@ export function ExperimentalArenaPage() {
 
   return (
     <section className={experimentalClassName}>
+      {!isInitializing && !isAuthenticated ? (
+        <AuthGateCard
+          title="Sign in to use Experimental Arena."
+          description="Experimental rounds are tied to authenticated users because they use protected setup, continuation, and editing endpoints."
+          returnPath="/experimental"
+        />
+      ) : null}
+
+      {isInitializing || isAuthenticated ? (
+        <>
       {!turns.length && !pendingPrompt ? (
         <div className="experimental-arena__setup-shell">
           <div className="page-card page-card--helper experimental-arena__intro-card">
@@ -694,6 +707,8 @@ export function ExperimentalArenaPage() {
             </article>
           </div>
         </section>
+      ) : null}
+        </>
       ) : null}
     </section>
   )

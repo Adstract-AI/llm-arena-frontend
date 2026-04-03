@@ -7,6 +7,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { continueChat, getAvailableChatModels, startChat } from '../api/chatApi'
 import type { ChatModel, ChatUiMessage } from '../types'
+import { useAuth } from '../../auth/context/AuthContext'
+import { AuthGateCard } from '../../auth/components/AuthGateCard'
 
 function createMessage(role: ChatUiMessage['role'], content: string): ChatUiMessage {
   return {
@@ -17,6 +19,7 @@ function createMessage(role: ChatUiMessage['role'], content: string): ChatUiMess
 }
 
 export function ChatPage() {
+  const { isAuthenticated, isInitializing } = useAuth()
   const [models, setModels] = useState<ChatModel[]>([])
   const [selectedModelName, setSelectedModelName] = useState('')
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -31,6 +34,13 @@ export function ChatPage() {
 
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      setModels([])
+      setSelectedModelName('')
+      setIsLoadingModels(false)
+      return
+    }
+
     let isMounted = true
 
     async function loadModels() {
@@ -67,7 +77,7 @@ export function ChatPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [isAuthenticated])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -135,6 +145,18 @@ export function ChatPage() {
   }
 
   const modelControlDisabled = isLoadingModels || isSending || Boolean(sessionId)
+
+  if (!isInitializing && !isAuthenticated) {
+    return (
+      <section className="chat-session">
+        <AuthGateCard
+          title="Sign in to use Chat."
+          description="Chat sessions are connected to your account, so you’ll need to log in before starting a conversation."
+          returnPath="/chat"
+        />
+      </section>
+    )
+  }
 
   return (
     <section className="chat-session">
