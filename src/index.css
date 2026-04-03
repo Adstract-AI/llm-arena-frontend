@@ -1850,6 +1850,10 @@ input {
   gap: 14px;
 }
 
+.model-details__section--wide {
+  grid-column: 1 / -1;
+}
+
 .model-section-header {
   display: flex;
   align-items: center;
@@ -1951,6 +1955,10 @@ input {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.model-stats-grid--wide {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .model-stat {

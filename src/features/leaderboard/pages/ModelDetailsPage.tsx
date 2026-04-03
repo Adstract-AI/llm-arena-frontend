@@ -339,6 +339,38 @@ export function ModelDetailsPage() {
                   </div>
                 </div>
               </article>
+                <article className="leaderboard-card model-details__section model-details__section--wide">
+                    <SectionHeader
+                        title="Parameter Averages"
+                        details={[
+                            'These averages summarize the experimental parameter values used when this model won a revealed experimental round.',
+                            'When no experimental wins with tracked parameter data are available yet, these values remain unavailable.',
+                        ]}
+                    />
+                    <div className="model-stats-grid model-stats-grid--wide">
+                        <div className="model-stat">
+                            <span className="model-stat__label">Avg. temperature</span>
+                            <strong>{formatNumber(model.avgWinningTemp, 4)}</strong>
+                        </div>
+                        <div className="model-stat">
+                            <span className="model-stat__label">Avg. top-p</span>
+                            <strong>{formatNumber(model.avgWinningTopP, 4)}</strong>
+                        </div>
+                        <div className="model-stat">
+                            <span className="model-stat__label">Avg. top-k</span>
+                            <strong>{formatNumber(model.avgWinningTopK, 1)}</strong>
+                        </div>
+                        <div className="model-stat">
+                            <span className="model-stat__label">Avg. frequency penalty</span>
+                            <strong>{formatNumber(model.avgWinningFreqPenalty, 4)}</strong>
+                        </div>
+                        <div className="model-stat">
+                            <span className="model-stat__label">Avg. presence penalty</span>
+                            <strong>{formatNumber(model.avgWinningPresPenalty, 4)}</strong>
+                        </div>
+                    </div>
+                </article>
+
             </div>
           </div>
         ) : null}
