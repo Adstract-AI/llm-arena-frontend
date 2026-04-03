@@ -26,7 +26,7 @@ const modelModeOptions: Array<{
 }> = [
   {
     value: 'same',
-    label: 'Same model',
+    label: 'Single model',
   },
   {
     value: 'different',
@@ -40,11 +40,11 @@ const parameterModeOptions: Array<{
 }> = [
   {
     value: 'random',
-    label: 'Random parameters',
+    label: 'Model-specific',
   },
   {
     value: 'same',
-    label: 'Same parameters',
+    label: 'Identical',
   },
 ]
 
@@ -91,7 +91,7 @@ const setupTooltipSections: Array<{
     title: 'Model selection',
     items: [
       {
-        title: 'Same model',
+        title: 'Single model',
         body: 'Runs the same model twice to compare how different parameter settings affect the response.',
       },
       {
@@ -104,11 +104,11 @@ const setupTooltipSections: Array<{
     title: 'Parameters',
     items: [
       {
-        title: 'Random parameters',
+        title: 'Model-specific (Different parameters)',
         body: 'Each response uses independently sampled parameter values.',
       },
       {
-        title: 'Same parameters',
+        title: 'Identical',
         body: 'Both responses use identical parameter settings.',
       },
       {
@@ -242,7 +242,7 @@ export function ExperimentalSetupPanel({
         <div className="experimental-setup-card__section-copy">
           <p className="model-details__copy-label">Parameters</p>
           <p className="experimental-setup-card__helper">
-            Values revealed after voting is completed
+              Configure how parameter values are sampled for each run
           </p>
         </div>
 

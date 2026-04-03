@@ -54,10 +54,10 @@ function formatSetupSummary(setup: ExperimentalSetup): string {
   const baseSummary = setup.modelMode === 'same'
     ? setup.parameterMode === 'same'
       ? 'Same model · same parameters'
-      : 'Same model · random parameters'
+      : 'Same model · different parameters'
     : setup.parameterMode === 'same'
     ? 'Different models · same parameters'
-    : 'Different models · random parameters'
+    : 'Different models · different parameters'
 
   const enabledParameters = Object.entries(setup.parameters)
     .filter(([, parameter]) => parameter.enabled)
@@ -78,10 +78,6 @@ function cloneDefaultParameterSettings(): ExperimentalParameterSettings {
     frequencyPenalty: { ...DEFAULT_PARAMETER_SETTINGS.frequencyPenalty },
     presencePenalty: { ...DEFAULT_PARAMETER_SETTINGS.presencePenalty },
   }
-}
-
-function requiresEnabledParameter(setup: ExperimentalSetup): boolean {
-  return setup.modelMode === 'same' || setup.parameterMode === 'same'
 }
 
 function hasEnabledParameter(setup: ExperimentalSetup): boolean {
@@ -216,7 +212,7 @@ export function ExperimentalArenaPage() {
   }
 
   function handleConfirmSetup() {
-    if (requiresEnabledParameter(draftSetup) && !hasEnabledParameter(draftSetup)) {
+    if (!hasEnabledParameter(draftSetup)) {
       setSetupValidationMessage('Enable at least one parameter for this setup.')
       return
     }
