@@ -34,7 +34,7 @@ interface NumericColumn {
 
 function formatNullableMetric(value: number | null, digits = 2): string {
   if (value === null) {
-    return 'N/A'
+    return digits === 0 ? '0' : (0).toFixed(digits)
   }
 
   return value.toFixed(digits)
@@ -54,7 +54,7 @@ const defaultColumns: NumericColumn[] = [
     render: (model) => (
       <div className="winrate-meter">
         <span className="winrate-meter__value">
-          {model.nonTieWinRate === null ? 'N/A' : `${(model.nonTieWinRate * 100).toFixed(1)}%`}
+          {`${((model.nonTieWinRate ?? 0) * 100).toFixed(1)}%`}
         </span>
         <span className="winrate-meter__track" aria-hidden="true">
           <span
