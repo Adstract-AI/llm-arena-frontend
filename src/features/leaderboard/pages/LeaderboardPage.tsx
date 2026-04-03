@@ -32,6 +32,14 @@ interface NumericColumn {
   render: (model: LeaderboardModel) => ReactNode
 }
 
+function formatNullableMetric(value: number | null, digits = 2): string {
+  if (value === null) {
+    return 'N/A'
+  }
+
+  return value.toFixed(digits)
+}
+
 const defaultColumns: NumericColumn[] = [
   {
     key: 'eloScore',
@@ -45,11 +53,15 @@ const defaultColumns: NumericColumn[] = [
     sortLabel: 'Win Rate',
     render: (model) => (
       <div className="winrate-meter">
-        <span className="winrate-meter__value">{(model.nonTieWinRate * 100).toFixed(1)}%</span>
+        <span className="winrate-meter__value">
+          {model.nonTieWinRate === null ? 'N/A' : `${(model.nonTieWinRate * 100).toFixed(1)}%`}
+        </span>
         <span className="winrate-meter__track" aria-hidden="true">
           <span
             className="winrate-meter__fill"
-            style={{ width: `${Math.max(0, Math.min(model.nonTieWinRate * 100, 100))}%` }}
+            style={{
+              width: `${Math.max(0, Math.min((model.nonTieWinRate ?? 0) * 100, 100))}%`,
+            }}
           />
         </span>
       </div>
@@ -93,21 +105,21 @@ const experimentalColumns: NumericColumn[] = [
     label: 'Avg Temp',
     sortLabel: 'Avg Temp',
     tooltip: 'Average winning temperature',
-    render: (model) => model.avgWinningTemp.toFixed(2),
+    render: (model) => formatNullableMetric(model.avgWinningTemp),
   },
   {
     key: 'avgWinningTopP',
     label: 'Avg Top-p',
     sortLabel: 'Avg Top-p',
     tooltip: 'Average winning top-p',
-    render: (model) => model.avgWinningTopP.toFixed(2),
+    render: (model) => formatNullableMetric(model.avgWinningTopP),
   },
   {
     key: 'avgWinningTopK',
     label: 'Avg Top-k',
     sortLabel: 'Avg Top-k',
     tooltip: 'Average winning top-k',
-    render: (model) => model.avgWinningTopK.toFixed(0),
+    render: (model) => formatNullableMetric(model.avgWinningTopK, 0),
   },
   {
     key: 'avgWinningFreqPenalty',
@@ -119,7 +131,7 @@ const experimentalColumns: NumericColumn[] = [
     ),
     sortLabel: 'Avg Freq Penalty',
     tooltip: 'Average winning frequency penalty',
-    render: (model) => model.avgWinningFreqPenalty.toFixed(2),
+    render: (model) => formatNullableMetric(model.avgWinningFreqPenalty),
   },
   {
     key: 'avgWinningPresPenalty',
@@ -131,7 +143,7 @@ const experimentalColumns: NumericColumn[] = [
     ),
     sortLabel: 'Avg Pres Penalty',
     tooltip: 'Average winning presence penalty',
-    render: (model) => model.avgWinningPresPenalty.toFixed(2),
+    render: (model) => formatNullableMetric(model.avgWinningPresPenalty),
   },
 ]
 
@@ -148,7 +160,9 @@ export function LeaderboardPage() {
   const sortedModels = useMemo(() => {
     return [...models].sort((a, b) => {
       const direction = sort.direction === 'asc' ? 1 : -1
-      return (a[sort.key] - b[sort.key]) * direction
+      const valueA = a[sort.key] ?? Number.NEGATIVE_INFINITY
+      const valueB = b[sort.key] ?? Number.NEGATIVE_INFINITY
+      return (valueA - valueB) * direction
     })
   }, [models, sort])
 

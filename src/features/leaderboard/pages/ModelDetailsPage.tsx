@@ -40,7 +40,11 @@ function SectionHeader({ title, details }: { title: string; details: string[] })
   )
 }
 
-function formatPercent(value: number): string {
+function formatPercent(value: number | null): string {
+  if (value === null) {
+    return 'Not available'
+  }
+
   return `${(value * 100).toFixed(1)}%`
 }
 
@@ -232,6 +236,10 @@ export function ModelDetailsPage() {
                   <div className="model-stat">
                     <span className="model-stat__label">Ties</span>
                     <strong>{model.ties}</strong>
+                  </div>
+                  <div className="model-stat">
+                    <span className="model-stat__label">Experimental wins</span>
+                    <strong>{model.experimentalWins}</strong>
                   </div>
                 </div>
               </article>
