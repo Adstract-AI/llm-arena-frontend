@@ -151,7 +151,7 @@ export function ChatPage() {
       <section className="chat-session">
         <AuthGateCard
           title="Sign in to use Chat."
-          description="Chat sessions are connected to your account, so you’ll need to log in before starting a conversation."
+          description="Sign in to start chatting and keep your conversations saved"
           returnPath="/chat"
         />
       </section>

@@ -86,7 +86,7 @@ export function AboutPage() {
               <div className="about-item about-item--step">
                 <span className="about-item__number">03</span>
                 <h4>Run the comparison blind</h4>
-                <p>The conversation still follows the same anonymous compare-and-vote flow as Arena.</p>
+                <p>The conversation still follows the same anonymous compare-and-vote flow as Arena. After each round, you can also submit an improved version of the last response.</p>
               </div>
               <div className="about-item about-item--step">
                 <span className="about-item__number">04</span>
@@ -115,15 +115,6 @@ export function AboutPage() {
             alt="Faculty of Computer Science and Engineering logo"
             className="about-funding__logo"
           />
-        </div>
-
-        <div className="about-partners__block about-collaboration">
-          <p className="about-funding__label">In collaboration with</p>
-          <p className="about-collaboration__title">Adstract</p>
-          <p className="about-collaboration__copy">
-            MakArena is developed as a collaboration between FINKI and the Adstract
-            team.
-          </p>
         </div>
       </section>
     </section>

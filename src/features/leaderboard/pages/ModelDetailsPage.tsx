@@ -129,11 +129,11 @@ export function ModelDetailsPage() {
   return (
     <section className="leaderboard leaderboard--wide">
       <div className="leaderboard-shell">
-        <div className="page-card page-card--helper">
-          <p className="eyebrow">Model Details</p>
-          <h2>Explore a model profile.</h2>
-          <p>See what this model is, who provides it, and how it performs in the arena.</p>
-        </div>
+        {/*<div className="page-card page-card--helper">*/}
+        {/*  /!*<p className="eyebrow">Model Details</p>*!/*/}
+        {/*  /!*<h2>Explore a model profile.</h2>*!/*/}
+        {/*  /!*<p>See what this model is, who provides it, and how it performs in the arena.</p>*!/*/}
+        {/*</div>*/}
 
         {isLoading ? (
           <div className="leaderboard-card">

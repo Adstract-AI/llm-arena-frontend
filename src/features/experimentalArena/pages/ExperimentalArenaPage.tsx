@@ -441,7 +441,7 @@ export function ExperimentalArenaPage() {
       {!isInitializing && !isAuthenticated ? (
         <AuthGateCard
           title="Sign in to use Experimental Arena."
-          description="Experimental rounds are tied to authenticated users because they use protected setup, continuation, and editing endpoints."
+          description="Sign in to explore all the features in the Experimental Arena"
           returnPath="/experimental"
         />
       ) : null}
@@ -454,18 +454,15 @@ export function ExperimentalArenaPage() {
             <p className="eyebrow">Experimental Arena</p>
             <h2>Compare with one extra layer of control.</h2>
             <p>
-              Keep the same ChatVote rhythm, but define the comparison setup first
+              Keep the same Arena rhythm, but define the comparison setup first
               so you can test same-model runs or parameter-matched battles.
+              After each prompt, you can also submit an improvement to refine the results.
             </p>
             <div className="arena-note" aria-label="Experimental arena disclaimer">
               <strong>Experimental mode:</strong>
               <span>
                 Parameter values stay hidden until after voting to preserve the
                 blind-evaluation flow.
-              </span>
-              <span>
-                This page currently uses the same endpoints as Arena while the new
-                backend is being prepared.
               </span>
             </div>
           </div>

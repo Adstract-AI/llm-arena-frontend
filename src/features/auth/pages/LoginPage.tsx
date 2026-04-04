@@ -47,9 +47,9 @@ export function LoginPage() {
         <div className="auth-login-shell__glow" aria-hidden="true" />
         <section className="auth-card auth-card--login">
           <div className="auth-card__header auth-card__header--compact">
-            <p className="eyebrow">Login</p>
-            <h1>Continue with a provider</h1>
-            <p>Sign in to access Chat and Experimental features.</p>
+            <p className="eyebrow">Sign In</p>
+            <h1>Sign in to access all the features</h1>
+            <p>Continue with a provider:</p>
           </div>
 
           {error ? <p className="leaderboard-error">{error}</p> : null}
