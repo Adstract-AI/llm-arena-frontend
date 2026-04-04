@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded'
 import DarkModeRoundedIcon from '@mui/icons-material/DarkModeRounded'
 import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { deleteCurrentUser } from '../../features/auth/api/authApi'
 import { AuthProvider, useAuth } from '../../features/auth/context/AuthContext'
 
 const navItems = [
@@ -29,8 +30,12 @@ function getInitialTheme(): Theme {
 }
 
 function AppLayoutInner() {
+  const navigate = useNavigate()
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false)
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+  const [deleteAccountError, setDeleteAccountError] = useState<string | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
   const {
     isAuthenticated,
@@ -70,12 +75,52 @@ function AppLayoutInner() {
   }, [isUserMenuOpen])
 
   useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsDeleteConfirmOpen(false)
+        setDeleteAccountError(null)
+      }
+    }
+
+    if (isDeleteConfirmOpen) {
+      document.addEventListener('keydown', handleEscape)
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isDeleteConfirmOpen])
+
+  useEffect(() => {
     if (isUserMenuOpen) {
       void loadCurrentUser()
     }
     // loadCurrentUser comes from context and does not need to retrigger this effect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isUserMenuOpen])
+
+  async function handleDeleteAccount() {
+    if (isDeletingAccount) {
+      return
+    }
+
+    setDeleteAccountError(null)
+    setIsDeletingAccount(true)
+
+    try {
+      await deleteCurrentUser()
+      setIsDeleteConfirmOpen(false)
+      setIsUserMenuOpen(false)
+      logout(false)
+      navigate('/')
+    } catch (error) {
+      setDeleteAccountError(
+        error instanceof Error ? error.message : 'Could not delete account.',
+      )
+    } finally {
+      setIsDeletingAccount(false)
+    }
+  }
 
   return (
     <div className="app-shell">
@@ -144,6 +189,16 @@ function AppLayoutInner() {
                       >
                         Logout
                       </button>
+                      <button
+                        type="button"
+                        className="user-menu__delete"
+                        onClick={() => {
+                          setDeleteAccountError(null)
+                          setIsDeleteConfirmOpen(true)
+                        }}
+                      >
+                        Delete account
+                      </button>
                     </div>
                   ) : null}
                 </div>
@@ -183,6 +238,58 @@ function AppLayoutInner() {
       <main className="app-main">
         <Outlet />
       </main>
+
+      {isDeleteConfirmOpen ? (
+        <div
+          className="confirm-dialog-backdrop"
+          onClick={() => {
+            if (!isDeletingAccount) {
+              setIsDeleteConfirmOpen(false)
+              setDeleteAccountError(null)
+            }
+          }}
+        >
+          <section
+            className="confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="delete-account-title"
+            aria-describedby="delete-account-description"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <p className="confirm-dialog__eyebrow">Delete account</p>
+            <h2 id="delete-account-title">This action cannot be undone.</h2>
+            <p id="delete-account-description" className="confirm-dialog__copy">
+              Every sensitive piece of information connected to your account will be
+              deleted. This step is irreversible.
+            </p>
+            {deleteAccountError ? (
+              <p className="confirm-dialog__error">{deleteAccountError}</p>
+            ) : null}
+            <div className="confirm-dialog__actions">
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => {
+                  setIsDeleteConfirmOpen(false)
+                  setDeleteAccountError(null)
+                }}
+                disabled={isDeletingAccount}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="confirm-dialog__danger"
+                onClick={() => void handleDeleteAccount()}
+                disabled={isDeletingAccount}
+              >
+                {isDeletingAccount ? 'Deleting...' : 'Delete account'}
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }

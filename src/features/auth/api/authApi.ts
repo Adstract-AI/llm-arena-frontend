@@ -1,4 +1,4 @@
-import { httpGet, httpPost } from '../../../shared/network/httpClient'
+import { httpDelete, httpGet, httpPost } from '../../../shared/network/httpClient'
 import type { AuthSession, AuthTokens, AuthUser, OAuthProvider } from '../types'
 
 interface AuthLoginResponseDto {
@@ -56,6 +56,10 @@ export async function refreshAccessToken(refreshToken: string): Promise<string> 
 export async function getCurrentUser(): Promise<AuthUser> {
   const response = await httpGet<CurrentUserResponseDto>('/api/auth/me/')
   return toAuthUser(response)
+}
+
+export async function deleteCurrentUser(): Promise<void> {
+  await httpDelete('/api/auth/me/delete/')
 }
 
 export function toAuthTokens(session: AuthSession): AuthTokens {

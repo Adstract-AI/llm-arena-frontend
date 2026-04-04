@@ -87,8 +87,12 @@ export async function httpPatch<TResponse, TBody extends object>(
   return request<TResponse, TBody>('patch', path, body, options)
 }
 
+export async function httpDelete<TResponse>(path: string, options?: RequestOptions): Promise<TResponse> {
+  return request<TResponse>('delete', path, undefined, options)
+}
+
 async function request<TResponse, TBody extends object | undefined = undefined>(
-  method: 'get' | 'post' | 'patch',
+  method: 'get' | 'post' | 'patch' | 'delete',
   path: string,
   body?: TBody,
   options?: RequestOptions,
@@ -106,6 +110,8 @@ async function request<TResponse, TBody extends object | undefined = undefined>(
         ? await http.get<TResponse>(path, { headers })
         : method === 'post'
           ? await http.post<TResponse>(path, body, { headers })
+          : method === 'delete'
+            ? await http.delete<TResponse>(path, { headers })
           : await http.patch<TResponse>(path, body, { headers })
     return response.data
   } catch (error) {
@@ -123,6 +129,8 @@ async function request<TResponse, TBody extends object | undefined = undefined>(
             ? await http.get<TResponse>(path, { headers: retryHeaders })
             : method === 'post'
               ? await http.post<TResponse>(path, body, { headers: retryHeaders })
+              : method === 'delete'
+                ? await http.delete<TResponse>(path, { headers: retryHeaders })
               : await http.patch<TResponse>(path, body, { headers: retryHeaders })
 
         return retryResponse.data

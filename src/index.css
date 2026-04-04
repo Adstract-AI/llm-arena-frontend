@@ -239,6 +239,105 @@ input {
   outline: none;
 }
 
+.user-menu__delete {
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  text-align: left;
+  background: transparent;
+  color: color-mix(in srgb, #ff6b6b 82%, var(--text-main) 18%);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+.user-menu__delete:hover,
+.user-menu__delete:focus-visible {
+  background: color-mix(in srgb, #b91c1c 10%, transparent);
+  color: #ff8b8b;
+  outline: none;
+}
+
+.confirm-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3, 7, 18, 0.56);
+  backdrop-filter: blur(8px);
+}
+
+.confirm-dialog {
+  width: min(100%, 460px);
+  display: grid;
+  gap: 14px;
+  padding: 22px;
+  border-radius: var(--radius-md);
+  background: var(--bg-card);
+  border: 1px solid color-mix(in srgb, var(--line-strong) 34%, transparent);
+  box-shadow:
+    0 24px 48px color-mix(in srgb, var(--shadow-color) 18%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 10%, transparent);
+}
+
+.confirm-dialog__eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #ff8b8b 82%, var(--text-soft) 18%);
+  font-weight: 700;
+}
+
+.confirm-dialog h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2.2vw, 1.6rem);
+  line-height: 1.1;
+}
+
+.confirm-dialog__copy {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.confirm-dialog__error {
+  margin: 0;
+  color: #ff8b8b;
+  font-size: 0.92rem;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirm-dialog__danger {
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #b91c1c, #dc2626);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 180ms ease, opacity 180ms ease;
+}
+
+.confirm-dialog__danger:hover,
+.confirm-dialog__danger:focus-visible {
+  filter: brightness(1.06);
+  outline: none;
+}
+
+.confirm-dialog__danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .topnav__link {
   text-decoration: none;
   padding: 10px 13px;
