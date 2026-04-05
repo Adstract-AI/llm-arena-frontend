@@ -40,7 +40,11 @@ function SectionHeader({ title, details }: { title: string; details: string[] })
   )
 }
 
-function formatPercent(value: number): string {
+function formatPercent(value: number | null): string {
+  if (value === null) {
+    return 'Not available'
+  }
+
   return `${(value * 100).toFixed(1)}%`
 }
 
@@ -125,11 +129,11 @@ export function ModelDetailsPage() {
   return (
     <section className="leaderboard leaderboard--wide">
       <div className="leaderboard-shell">
-        <div className="page-card page-card--helper">
-          <p className="eyebrow">Model Details</p>
-          <h2>Explore a model profile.</h2>
-          <p>See what this model is, who provides it, and how it performs in the arena.</p>
-        </div>
+        {/*<div className="page-card page-card--helper">*/}
+        {/*  /!*<p className="eyebrow">Model Details</p>*!/*/}
+        {/*  /!*<h2>Explore a model profile.</h2>*!/*/}
+        {/*  /!*<p>See what this model is, who provides it, and how it performs in the arena.</p>*!/*/}
+        {/*</div>*/}
 
         {isLoading ? (
           <div className="leaderboard-card">
@@ -233,6 +237,10 @@ export function ModelDetailsPage() {
                     <span className="model-stat__label">Ties</span>
                     <strong>{model.ties}</strong>
                   </div>
+                  <div className="model-stat">
+                    <span className="model-stat__label">Experimental wins</span>
+                    <strong>{model.experimentalWins}</strong>
+                  </div>
                 </div>
               </article>
             </div>
@@ -331,6 +339,38 @@ export function ModelDetailsPage() {
                   </div>
                 </div>
               </article>
+                <article className="leaderboard-card model-details__section model-details__section--wide">
+                    <SectionHeader
+                        title="Parameter Averages"
+                        details={[
+                            'These averages summarize the experimental parameter values used when this model won a revealed experimental round.',
+                            'When no experimental wins with tracked parameter data are available yet, these values remain unavailable.',
+                        ]}
+                    />
+                    <div className="model-stats-grid model-stats-grid--wide">
+                        <div className="model-stat">
+                            <span className="model-stat__label">Avg. temperature</span>
+                            <strong>{formatNumber(model.avgWinningTemp, 4)}</strong>
+                        </div>
+                        <div className="model-stat">
+                            <span className="model-stat__label">Avg. top-p</span>
+                            <strong>{formatNumber(model.avgWinningTopP, 4)}</strong>
+                        </div>
+                        <div className="model-stat">
+                            <span className="model-stat__label">Avg. top-k</span>
+                            <strong>{formatNumber(model.avgWinningTopK, 1)}</strong>
+                        </div>
+                        <div className="model-stat">
+                            <span className="model-stat__label">Avg. frequency penalty</span>
+                            <strong>{formatNumber(model.avgWinningFreqPenalty, 4)}</strong>
+                        </div>
+                        <div className="model-stat">
+                            <span className="model-stat__label">Avg. presence penalty</span>
+                            <strong>{formatNumber(model.avgWinningPresPenalty, 4)}</strong>
+                        </div>
+                    </div>
+                </article>
+
             </div>
           </div>
         ) : null}

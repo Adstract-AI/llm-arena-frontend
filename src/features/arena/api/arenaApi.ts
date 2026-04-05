@@ -13,6 +13,7 @@ interface BattleStateResponse {
     responses: Array<{
       slot: ApiSlot
       response_text: string
+      improvement_text?: string | null
     }>
   }>
 }
@@ -87,6 +88,8 @@ function toArenaTurn(turn: BattleStateResponse['turns'][number]): ArenaTurn {
     prompt: turn.prompt,
     answerA: answerA.response_text,
     answerB: answerB.response_text,
+    answerAImprovementText: answerA.improvement_text ?? null,
+    answerBImprovementText: answerB.improvement_text ?? null,
   }
 }
 
@@ -103,6 +106,7 @@ export async function startBattle(prompt: string): Promise<ArenaBattle> {
   const response = await httpPost<BattleStateResponse, { prompt: string }>(
     '/api/arena/battles/',
     { prompt },
+    { auth: false },
   )
 
   return toArenaBattle(response)
@@ -112,6 +116,7 @@ export async function continueBattle(battleId: string, prompt: string): Promise<
   const response = await httpPost<BattleStateResponse, { prompt: string }>(
     `/api/arena/battles/${encodeURIComponent(battleId)}/turns/`,
     { prompt },
+    { auth: false },
   )
 
   return toArenaBattle(response)
@@ -120,6 +125,7 @@ export async function continueBattle(battleId: string, prompt: string): Promise<
 export async function getBattleDetails(battleId: string): Promise<ArenaBattle> {
   const response = await httpGet<BattleStateResponse>(
     `/api/arena/battles/${encodeURIComponent(battleId)}/`,
+    { auth: false },
   )
 
   return toArenaBattle(response)
@@ -129,6 +135,7 @@ export async function submitVote(battleId: string, vote: VoteChoice): Promise<Vo
   const response = await httpPost<VoteResponse, VoteRequestPayload>(
     `/api/arena/battles/${encodeURIComponent(battleId)}/vote/`,
     toApiVotePayload(vote),
+    { auth: false },
   )
 
   if (import.meta.env.DEV) {

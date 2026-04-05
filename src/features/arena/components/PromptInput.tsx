@@ -5,9 +5,15 @@ interface PromptInputProps {
   onSubmit: (prompt: string) => Promise<void>
   loading: boolean
   disabled?: boolean
+  placeholder?: string
 }
 
-export function PromptInput({ onSubmit, loading, disabled = false }: PromptInputProps) {
+export function PromptInput({
+  onSubmit,
+  loading,
+  disabled = false,
+  placeholder = 'Ask to compare models...',
+}: PromptInputProps) {
   const [value, setValue] = useState('')
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -34,7 +40,7 @@ export function PromptInput({ onSubmit, loading, disabled = false }: PromptInput
           className="chat-composer__input"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          placeholder="Ask to compare models..."
+          placeholder={placeholder}
           disabled={loading || disabled}
         />
 
