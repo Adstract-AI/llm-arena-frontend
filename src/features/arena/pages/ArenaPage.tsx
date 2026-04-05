@@ -152,7 +152,7 @@ export function ArenaPage() {
           <p className="eyebrow">Model Arena</p>
           <h2>Put two anonymous models head-to-head.</h2>
           <p>
-            Submit a prompt, compare both responses, then vote. Model identities
+            Submit prompts, compare both responses, then vote. Model identities
             unlock after voting.
           </p>
           <div className="arena-note" aria-label="Model disclaimer">

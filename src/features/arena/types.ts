@@ -5,6 +5,8 @@ export interface ArenaTurn {
   prompt: string
   answerA: string
   answerB: string
+  answerAImprovementText: string | null
+  answerBImprovementText: string | null
 }
 
 export interface ArenaBattle {
