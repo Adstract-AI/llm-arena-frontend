@@ -9,6 +9,8 @@ import { ModelDetailsPage } from '../features/leaderboard/pages/ModelDetailsPage
 import { ExperimentalArenaPage } from '../features/experimentalArena/pages/ExperimentalArenaPage'
 import { LoginPage } from '../features/auth/pages/LoginPage'
 import { OAuthCallbackPage } from '../features/auth/pages/OAuthCallbackPage'
+import { PrivacyPolicyPage } from '../features/legal/pages/PrivacyPolicyPage'
+import { TermsOfServicePage } from '../features/legal/pages/TermsOfServicePage'
 
 export const router = createBrowserRouter([
   {
@@ -22,6 +24,8 @@ export const router = createBrowserRouter([
       { path: 'leaderboard', element: <LeaderboardPage /> },
       { path: 'models/:modelName', element: <ModelDetailsPage /> },
       { path: 'about', element: <AboutPage /> },
+      { path: 'privacy', element: <PrivacyPolicyPage /> },
+      { path: 'terms', element: <TermsOfServicePage /> },
       { path: 'login', element: <LoginPage /> },
       { path: 'auth/github/callback', element: <OAuthCallbackPage provider="github" /> },
       { path: 'auth/google/callback', element: <OAuthCallbackPage provider="google" /> },

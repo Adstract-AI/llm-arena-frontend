@@ -440,8 +440,8 @@ export function ExperimentalArenaPage() {
     <section className={experimentalClassName}>
       {!isInitializing && !isAuthenticated ? (
         <AuthGateCard
-          title="Sign in to use Experimental Arena."
-          description="Sign in to explore all the features in the Experimental Arena"
+          title="Sign in to use Experimental Arena"
+          description="Sign in to explore all the features in the Experimental Arena."
           returnPath="/experimental"
         />
       ) : null}

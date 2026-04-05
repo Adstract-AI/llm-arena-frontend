@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 export function AboutPage() {
   return (
     <section className="about">
@@ -115,6 +117,18 @@ export function AboutPage() {
             alt="Faculty of Computer Science and Engineering logo"
             className="about-funding__logo"
           />
+        </div>
+
+        <div className="about-partners__block about-legal">
+          <p className="about-funding__label">Legal</p>
+          <div className="about-legal__links">
+            <Link to="/privacy" className="about-legal__link">
+              Privacy Policy
+            </Link>
+            <Link to="/terms" className="about-legal__link">
+              Terms of Service
+            </Link>
+          </div>
         </div>
       </section>
     </section>

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import GoogleIcon from '@mui/icons-material/Google'
 import ArrowOutwardRoundedIcon from '@mui/icons-material/ArrowOutwardRounded'
-import { Navigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { env } from '../../../shared/config/env'
 import { getStoredReturnPath } from '../storage'
@@ -89,7 +89,15 @@ export function LoginPage() {
           </div>
 
           <p className="auth-card__disclaimer">
-            You&apos;ll be redirected and returned to finish signing in.
+            By signing in, you agree to the{' '}
+            <Link to="/terms" className="auth-card__disclaimer-link">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy" className="auth-card__disclaimer-link">
+              Privacy Policy
+            </Link>
+            .
           </p>
         </section>
       </section>
