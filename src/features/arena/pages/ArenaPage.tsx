@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { TbShare3 } from 'react-icons/tb'
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
 import {
@@ -96,6 +96,7 @@ export function ArenaPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isVoting, setIsVoting] = useState(false)
   const streamAbortRef = useRef<AbortController | null>(null)
+  const shouldScrollToNextResponseRef = useRef(false)
   const turns = battle?.turns ?? []
   const latestTurn = turns.length > 0 ? turns[turns.length - 1] : null
 
@@ -134,6 +135,21 @@ export function ArenaPage() {
     }
   }, [])
 
+  const scrollToNewResponse = useCallback((node: HTMLElement | null) => {
+    if (!node || !shouldScrollToNextResponseRef.current) {
+      return
+    }
+
+    shouldScrollToNextResponseRef.current = false
+    window.requestAnimationFrame(() => {
+      const top = node.getBoundingClientRect().top + window.scrollY - 72
+      window.scrollTo({
+        top: Math.max(top, 0),
+        behavior: 'smooth',
+      })
+    })
+  }, [])
+
   async function syncBattleState(nextBattle: ArenaBattle) {
     try {
       const refreshedBattle = await getBattleDetails(nextBattle.battleId)
@@ -153,6 +169,7 @@ export function ArenaPage() {
     setSelectedVote(null)
     setPendingPrompt(prompt)
     setStreamingTurn(null)
+    shouldScrollToNextResponseRef.current = true
 
     try {
       if (env.enableStreaming) {
@@ -423,6 +440,7 @@ export function ArenaPage() {
 
   function resetRound() {
     streamAbortRef.current?.abort()
+    shouldScrollToNextResponseRef.current = false
     setBattle(null)
     setVoteOutcome(null)
     setSelectedVote(null)
@@ -484,7 +502,10 @@ export function ArenaPage() {
           <p className="chat-message__text">{currentStreamingTurn.turn.prompt}</p>
         </article>
 
-        <article className="chat-message chat-message--assistant chat-message--duel">
+        <article
+          ref={scrollToNewResponse}
+          className="chat-message chat-message--assistant chat-message--duel"
+        >
           <p className="chat-message__role">Responses</p>
           <ResponsePair
             round={currentStreamingTurn.turn}
@@ -536,7 +557,10 @@ export function ArenaPage() {
             <article className="chat-message chat-message--user">
               <p className="chat-message__text">{pendingPrompt}</p>
             </article>
-            <article className="chat-message chat-message--assistant chat-message--loading">
+            <article
+              ref={scrollToNewResponse}
+              className="chat-message chat-message--assistant chat-message--loading"
+            >
               <p className="chat-message__role">MakArena</p>
               <div className="typing-indicator" aria-label="Generating answers">
                 <span />
