@@ -12,7 +12,13 @@ interface ResponsePairProps {
     answer1Model: string
     answer2Model: string
   } | null
+  answerAStatus?: ResponseSlotStatus
+  answerBStatus?: ResponseSlotStatus
+  answerAError?: string | null
+  answerBError?: string | null
 }
+
+export type ResponseSlotStatus = 'idle' | 'streaming' | 'completed' | 'failed'
 
 function renderMarkdown(text: string) {
   return (
@@ -36,6 +42,10 @@ export function ResponsePair({
   disabled = false,
   reveal,
   revealedModels,
+  answerAStatus = 'completed',
+  answerBStatus = 'completed',
+  answerAError = null,
+  answerBError = null,
 }: ResponsePairProps) {
   const canSelect = Boolean(onSelectVote) && !disabled
   const cardAClassName =
@@ -56,47 +66,79 @@ export function ResponsePair({
     onSelectVote?.(vote)
   }
 
+  function renderCard(
+    label: 'Model 1' | 'Model 2',
+    vote: 'modelA' | 'modelB',
+    responseText: string,
+    modelName: string | undefined,
+    status: ResponseSlotStatus,
+    error: string | null,
+    className: string,
+  ) {
+    const isStreaming = status === 'streaming'
+    const isFailed = status === 'failed'
+
+    return (
+      <div className="response-column">
+        <div className="response-column__header">
+          <p className="response-column__title">{label}</p>
+          {reveal && modelName ? (
+            <p className="response-column__meta">{modelName}</p>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          className={[
+            canSelect ? className : `${className} response-card--static`,
+            isStreaming ? 'response-card--streaming' : null,
+            isFailed ? 'response-card--failed' : null,
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          disabled={disabled}
+          onClick={canSelect ? () => handleCardSelect(vote) : undefined}
+          aria-disabled={!canSelect}
+          tabIndex={canSelect ? 0 : -1}
+          aria-label={`Select ${label.toLowerCase()}`}
+        >
+          <div className="response-card__content">
+            {responseText ? renderMarkdown(responseText) : null}
+            {isStreaming ? (
+              <div className="response-card__stream-status" aria-label={`${label} is generating`}>
+                <span />
+                <span />
+                <span />
+              </div>
+            ) : null}
+            {isFailed && error ? (
+              <p className="response-card__error">{error}</p>
+            ) : null}
+          </div>
+        </button>
+      </div>
+    )
+  }
+
   return (
     <section className="duel-grid" aria-live="polite">
-      <div className="response-column">
-        <div className="response-column__header">
-          <p className="response-column__title">Model 1</p>
-          {reveal && revealedModels ? (
-            <p className="response-column__meta">{revealedModels.answer1Model}</p>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          className={canSelect ? cardAClassName : `${cardAClassName} response-card--static`}
-          disabled={disabled}
-          onClick={canSelect ? () => handleCardSelect('modelA') : undefined}
-          aria-disabled={!canSelect}
-          tabIndex={canSelect ? 0 : -1}
-          aria-label="Select model 1"
-        >
-          <div className="response-card__content">{renderMarkdown(round.answerA)}</div>
-        </button>
-      </div>
-
-      <div className="response-column">
-        <div className="response-column__header">
-          <p className="response-column__title">Model 2</p>
-          {reveal && revealedModels ? (
-            <p className="response-column__meta">{revealedModels.answer2Model}</p>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          className={canSelect ? cardBClassName : `${cardBClassName} response-card--static`}
-          disabled={disabled}
-          onClick={canSelect ? () => handleCardSelect('modelB') : undefined}
-          aria-disabled={!canSelect}
-          tabIndex={canSelect ? 0 : -1}
-          aria-label="Select model 2"
-        >
-          <div className="response-card__content">{renderMarkdown(round.answerB)}</div>
-        </button>
-      </div>
+      {renderCard(
+        'Model 1',
+        'modelA',
+        round.answerA,
+        revealedModels?.answer1Model,
+        answerAStatus,
+        answerAError,
+        cardAClassName,
+      )}
+      {renderCard(
+        'Model 2',
+        'modelB',
+        round.answerB,
+        revealedModels?.answer2Model,
+        answerBStatus,
+        answerBError,
+        cardBClassName,
+      )}
     </section>
   )
 }

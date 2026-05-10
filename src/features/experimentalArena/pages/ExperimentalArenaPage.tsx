@@ -1,18 +1,23 @@
-import { Fragment, useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded'
 import { Link } from 'react-router-dom'
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
 import { TbShare3 } from 'react-icons/tb'
 import {
   continueExperimentalBattle,
+  continueExperimentalBattleStream,
   getExperimentalBattleDetails,
   startExperimentalBattle,
+  startExperimentalBattleStream,
   submitExperimentalResponseImprovement,
   submitExperimentalVote,
+  toArenaBattle,
+  type BattleStateResponse,
 } from '../api/experimentalArenaApi'
 import { PromptInput } from '../../arena/components/PromptInput'
 import { VotePanel } from '../../arena/components/VotePanel'
 import type { ArenaBattle, ArenaTurn, VoteChoice } from '../../arena/types'
+import type { ResponseSlotStatus } from '../../arena/components/ResponsePair'
 import {
   EditableResponsePair,
   type EditableResponseState,
@@ -26,6 +31,7 @@ import {
   writeLocalJson,
 } from '../../../shared/storage/localJsonStorage'
 import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
+import { env } from '../../../shared/config/env'
 import type {
   ExperimentalDistributionType,
   ExperimentalParameterKey,
@@ -107,7 +113,14 @@ function getModelDetailsLink(modelName: string): string {
 }
 
 type EditableResponseSide = 'A' | 'B'
+type StreamSlot = 'A' | 'B'
 type ResponseEditMap = Record<string, EditableResponseState>
+
+interface StreamingTurnState {
+  turn: ArenaTurn
+  slotStatuses: Record<StreamSlot, ResponseSlotStatus>
+  slotErrors: Record<StreamSlot, string | null>
+}
 
 interface ExperimentalArenaSessionSnapshot {
   battle: ArenaBattle | null
@@ -148,6 +161,44 @@ function createResponseState(originalResponse: string): EditableResponseState {
   }
 }
 
+function createStreamingTurn(prompt: string, turnNumber: number): StreamingTurnState {
+  return {
+    turn: {
+      turnNumber,
+      prompt,
+      answerA: '',
+      answerB: '',
+      answerAImprovementText: null,
+      answerBImprovementText: null,
+    },
+    slotStatuses: {
+      A: 'idle',
+      B: 'idle',
+    },
+    slotErrors: {
+      A: null,
+      B: null,
+    },
+  }
+}
+
+function getStreamSlot(payload: unknown): StreamSlot | null {
+  const slot = typeof payload === 'object' && payload && 'slot' in payload
+    ? String((payload as { slot?: unknown }).slot).toUpperCase()
+    : ''
+
+  return slot === 'A' || slot === 'B' ? slot : null
+}
+
+function getPayloadText(payload: unknown, key: 'text' | 'response_text' | 'error'): string {
+  if (!payload || typeof payload !== 'object' || !(key in payload)) {
+    return ''
+  }
+
+  const value = (payload as Record<string, unknown>)[key]
+  return typeof value === 'string' ? value : ''
+}
+
 export function ExperimentalArenaPage() {
   const { isAuthenticated, isInitializing } = useAuth()
   const savedSession = useMemo(readExperimentalArenaSessionSnapshot, [])
@@ -159,9 +210,11 @@ export function ExperimentalArenaPage() {
     savedSession?.selectedVote ?? null,
   )
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null)
+  const [streamingTurn, setStreamingTurn] = useState<StreamingTurnState | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isVoting, setIsVoting] = useState(false)
+  const streamAbortRef = useRef<AbortController | null>(null)
   const [draftSetup, setDraftSetup] = useState<ExperimentalSetup>(
     savedSession?.draftSetup ?? createDefaultSetup(),
   )
@@ -248,6 +301,12 @@ export function ExperimentalArenaPage() {
     voteOutcome,
   ])
 
+  useEffect(() => {
+    return () => {
+      streamAbortRef.current?.abort()
+    }
+  }, [])
+
   async function syncBattleState(nextBattle: ArenaBattle) {
     try {
       const refreshedBattle = await getExperimentalBattleDetails(nextBattle.battleId)
@@ -266,21 +325,153 @@ export function ExperimentalArenaPage() {
     setError(null)
     setSelectedVote(null)
     setPendingPrompt(prompt)
+    setStreamingTurn(null)
 
     try {
+      if (env.enableStreaming) {
+        const abortController = new AbortController()
+        streamAbortRef.current = abortController
+        const nextTurnNumber = (latestTurn?.turnNumber ?? 0) + 1
+        setStreamingTurn(createStreamingTurn(prompt, nextTurnNumber))
+
+        const handleStreamEvent = async (event: string, data: unknown) => {
+          if (event === 'response_started') {
+            const slot = getStreamSlot(data)
+            if (!slot) return
+            setStreamingTurn((current) =>
+              current
+                ? {
+                    ...current,
+                    slotStatuses: {
+                      ...current.slotStatuses,
+                      [slot]: 'streaming',
+                    },
+                    slotErrors: {
+                      ...current.slotErrors,
+                      [slot]: null,
+                    },
+                  }
+                : current,
+            )
+            return
+          }
+
+          if (event === 'response_delta') {
+            const slot = getStreamSlot(data)
+            const text = getPayloadText(data, 'text')
+            if (!slot || !text) return
+
+            setStreamingTurn((current) => {
+              if (!current) return current
+              return {
+                ...current,
+                turn: {
+                  ...current.turn,
+                  answerA: slot === 'A' ? current.turn.answerA + text : current.turn.answerA,
+                  answerB: slot === 'B' ? current.turn.answerB + text : current.turn.answerB,
+                },
+              }
+            })
+            return
+          }
+
+          if (event === 'response_completed') {
+            const slot = getStreamSlot(data)
+            const text = getPayloadText(data, 'response_text')
+            if (!slot) return
+
+            setStreamingTurn((current) => {
+              if (!current) return current
+              return {
+                ...current,
+                turn: {
+                  ...current.turn,
+                  answerA: slot === 'A' ? text : current.turn.answerA,
+                  answerB: slot === 'B' ? text : current.turn.answerB,
+                },
+                slotStatuses: {
+                  ...current.slotStatuses,
+                  [slot]: 'completed',
+                },
+              }
+            })
+            return
+          }
+
+          if (event === 'response_failed') {
+            const slot = getStreamSlot(data)
+            if (!slot) return
+            setStreamingTurn((current) =>
+              current
+                ? {
+                    ...current,
+                    slotStatuses: {
+                      ...current.slotStatuses,
+                      [slot]: 'failed',
+                    },
+                    slotErrors: {
+                      ...current.slotErrors,
+                      [slot]:
+                        getPayloadText(data, 'error') ||
+                        'This model could not finish its response.',
+                    },
+                  }
+                : current,
+            )
+            return
+          }
+
+          if (event === 'battle_failed') {
+            throw new Error(
+              getPayloadText(data, 'error') || 'The experiment could not be generated.',
+            )
+          }
+
+          if (event === 'done') {
+            setBattle(toArenaBattle(data as BattleStateResponse))
+          }
+        }
+
+        await (battle
+          ? continueExperimentalBattleStream(
+              battle.battleId,
+              prompt,
+              {
+                onEvent: ({ event, data }) => handleStreamEvent(event, data),
+              },
+              abortController.signal,
+            )
+          : startExperimentalBattleStream(
+              prompt,
+              confirmedSetup,
+              {
+                onEvent: ({ event, data }) => handleStreamEvent(event, data),
+              },
+              abortController.signal,
+            ))
+
+        return
+      }
+
       const nextBattle = battle
         ? await continueExperimentalBattle(battle.battleId, prompt)
         : await startExperimentalBattle(prompt, confirmedSetup)
       await syncBattleState(nextBattle)
     } catch (submissionError) {
+      if (submissionError instanceof DOMException && submissionError.name === 'AbortError') {
+        return
+      }
+
       setError(
         submissionError instanceof Error
           ? submissionError.message
           : 'Could not process your prompt.',
       )
     } finally {
+      streamAbortRef.current = null
       setIsGenerating(false)
       setPendingPrompt(null)
+      setStreamingTurn(null)
     }
   }
 
@@ -320,10 +511,12 @@ export function ExperimentalArenaPage() {
   }
 
   function resetRound() {
+    streamAbortRef.current?.abort()
     setBattle(null)
     setVoteOutcome(null)
     setSelectedVote(null)
     setPendingPrompt(null)
+    setStreamingTurn(null)
     setError(null)
     setDraftSetup(createDefaultSetup())
     setConfirmedSetup(null)
@@ -338,7 +531,7 @@ export function ExperimentalArenaPage() {
   const experimentalClassName = [
     'arena',
     'experimental-arena',
-    turns.length > 0 || pendingPrompt ? 'arena--active' : 'arena--idle',
+    turns.length > 0 || pendingPrompt || streamingTurn ? 'arena--active' : 'arena--idle',
     battle && !voteOutcome && !isGenerating ? 'arena--with-vote-panel' : null,
     voteOutcome ? 'arena--with-result-panel' : null,
   ]
@@ -492,6 +685,36 @@ export function ExperimentalArenaPage() {
     )
   }
 
+  function renderStreamingTurn(currentStreamingTurn: StreamingTurnState) {
+    return (
+      <div key="streaming-turn" className="arena-turn">
+        <article className="chat-message chat-message--user">
+          <p className="chat-message__text">{currentStreamingTurn.turn.prompt}</p>
+        </article>
+
+        <article className="chat-message chat-message--assistant chat-message--duel">
+          <p className="chat-message__role">Responses</p>
+          <EditableResponsePair
+            selectedVote={null}
+            disabled
+            reveal={false}
+            canEditLatest={false}
+            answerAStatus={currentStreamingTurn.slotStatuses.A}
+            answerBStatus={currentStreamingTurn.slotStatuses.B}
+            answerAError={currentStreamingTurn.slotErrors.A}
+            answerBError={currentStreamingTurn.slotErrors.B}
+            answerAState={createResponseState(currentStreamingTurn.turn.answerA)}
+            answerBState={createResponseState(currentStreamingTurn.turn.answerB)}
+            onStartEdit={() => undefined}
+            onDraftChange={() => undefined}
+            onSubmitEdit={() => undefined}
+            onToggleEdited={() => undefined}
+          />
+        </article>
+      </div>
+    )
+  }
+
   const experimentalResultRows = voteOutcome
     ? [
         {
@@ -539,7 +762,7 @@ export function ExperimentalArenaPage() {
 
       {isInitializing || isAuthenticated ? (
         <>
-      {!turns.length && !pendingPrompt ? (
+      {!turns.length && !pendingPrompt && !streamingTurn ? (
         <div className="experimental-arena__setup-shell">
           <div className="page-card page-card--helper experimental-arena__intro-card">
             <p className="eyebrow">Experimental Arena</p>
@@ -628,7 +851,7 @@ export function ExperimentalArenaPage() {
       ) : null}
 
       <section className="chat-space" aria-live="polite">
-        {confirmedSetup && (turns.length > 0 || pendingPrompt) && !voteOutcome ? (
+        {confirmedSetup && (turns.length > 0 || pendingPrompt || streamingTurn) && !voteOutcome ? (
           <div className="experimental-context-chip" aria-label="Current experiment setup">
             <TuneRoundedIcon
               aria-hidden="true"
@@ -640,7 +863,9 @@ export function ExperimentalArenaPage() {
 
         {turns.map(renderTurn)}
 
-        {pendingPrompt ? (
+        {streamingTurn ? renderStreamingTurn(streamingTurn) : null}
+
+        {pendingPrompt && !streamingTurn ? (
           <>
             <article className="chat-message chat-message--user">
               <p className="chat-message__text">{pendingPrompt}</p>
