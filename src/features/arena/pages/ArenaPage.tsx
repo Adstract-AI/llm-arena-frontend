@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { TbShare3 } from 'react-icons/tb'
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
 import { continueBattle, getBattleDetails, startBattle, submitVote } from '../api/arenaApi'
@@ -6,11 +6,34 @@ import { PromptInput } from '../components/PromptInput'
 import { ResponsePair } from '../components/ResponsePair'
 import { VotePanel } from '../components/VotePanel'
 import type { ArenaBattle, ArenaTurn, VoteChoice, VoteOutcome } from '../types'
+import {
+  readLocalJson,
+  removeLocalJson,
+  writeLocalJson,
+} from '../../../shared/storage/localJsonStorage'
+import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
+
+const ARENA_SESSION_STORAGE_KEY = 'makarena-arena-session-v1'
+
+interface ArenaSessionSnapshot {
+  battle: ArenaBattle | null
+  voteOutcome: VoteOutcome | null
+  selectedVote: VoteChoice | null
+}
+
+function readArenaSessionSnapshot(): ArenaSessionSnapshot | null {
+  return readLocalJson<ArenaSessionSnapshot>(ARENA_SESSION_STORAGE_KEY)
+}
 
 export function ArenaPage() {
-  const [battle, setBattle] = useState<ArenaBattle | null>(null)
-  const [voteOutcome, setVoteOutcome] = useState<VoteOutcome | null>(null)
-  const [selectedVote, setSelectedVote] = useState<VoteChoice | null>(null)
+  const savedSession = useMemo(readArenaSessionSnapshot, [])
+  const [battle, setBattle] = useState<ArenaBattle | null>(savedSession?.battle ?? null)
+  const [voteOutcome, setVoteOutcome] = useState<VoteOutcome | null>(
+    savedSession?.voteOutcome ?? null,
+  )
+  const [selectedVote, setSelectedVote] = useState<VoteChoice | null>(
+    savedSession?.selectedVote ?? null,
+  )
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -33,6 +56,19 @@ export function ArenaPage() {
 
     return 'Tie'
   }, [voteOutcome])
+
+  useEffect(() => {
+    if (!battle && !voteOutcome && !selectedVote) {
+      removeLocalJson(ARENA_SESSION_STORAGE_KEY)
+      return
+    }
+
+    writeLocalJson<ArenaSessionSnapshot>(ARENA_SESSION_STORAGE_KEY, {
+      battle,
+      voteOutcome,
+      selectedVote,
+    })
+  }, [battle, selectedVote, voteOutcome])
 
   async function syncBattleState(nextBattle: ArenaBattle) {
     try {
@@ -98,6 +134,7 @@ export function ArenaPage() {
     setSelectedVote(null)
     setPendingPrompt(null)
     setError(null)
+    removeLocalJson(ARENA_SESSION_STORAGE_KEY)
   }
 
   function getModelDetailsLink(modelName: string) {
@@ -163,7 +200,12 @@ export function ArenaPage() {
         </div>
       ) : null}
 
-      {error ? <p className="leaderboard-error">{error}</p> : null}
+      {error ? (
+        <FriendlyErrorToast
+          message="We could not update the arena."
+          detail={error}
+        />
+      ) : null}
 
       <section className="chat-space" aria-live="polite">
         {turns.map(renderTurn)}

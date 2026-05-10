@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 export function HomePage() {
   return (
     <section className="home">
-      <p className="eyebrow">Compare. Vote. Contribute.</p>
       <h2 className="hero-title">Decide which AI model performed better.</h2>
       <p className="hero-copy">
         Compare models in Arena, test controlled runs in Experimental Arena, or jump
@@ -34,11 +33,7 @@ export function HomePage() {
             Start one arena conversation and compare two side-by-side model threads
             with hidden identities, so decisions stay focused on quality.
           </p>
-          <div className="info-card__inline-links">
-            <Link to="/arena" className="info-card__inline-link">
-              Go To Arena
-            </Link>
-          </div>
+
         </article>
         <article className="info-card">
           <p className="info-card__kicker">Step 2</p>
@@ -47,6 +42,11 @@ export function HomePage() {
             Continue for multiple turns if needed, then vote Model 1, Model 2, both,
             or neither. After voting, MakArena reveals which models were behind the conversation.
           </p>
+          <div className="info-card__inline-links">
+            <Link to="/arena" className="info-card__inline-link">
+              Go To Arena
+            </Link>
+          </div>
         </article>
         <article className="info-card">
           <p className="info-card__kicker">Also Available</p>

@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded'
 import { Link } from 'react-router-dom'
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded'
@@ -20,6 +20,12 @@ import {
 import { ExperimentalSetupPanel } from '../components/ExperimentalSetupPanel'
 import { useAuth } from '../../auth/context/AuthContext'
 import { AuthGateCard } from '../../auth/components/AuthGateCard'
+import {
+  readLocalJson,
+  removeLocalJson,
+  writeLocalJson,
+} from '../../../shared/storage/localJsonStorage'
+import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
 import type {
   ExperimentalDistributionType,
   ExperimentalParameterKey,
@@ -43,6 +49,8 @@ const DEFAULT_SETUP: ExperimentalSetup = {
   parameterMode: 'random',
   parameters: DEFAULT_PARAMETER_SETTINGS,
 }
+
+const EXPERIMENTAL_ARENA_SESSION_STORAGE_KEY = 'makarena-experimental-arena-session-v1'
 
 const PARAMETER_LABELS: Record<ExperimentalParameterKey, string> = {
   temperature: 'temperature',
@@ -101,6 +109,31 @@ function getModelDetailsLink(modelName: string): string {
 type EditableResponseSide = 'A' | 'B'
 type ResponseEditMap = Record<string, EditableResponseState>
 
+interface ExperimentalArenaSessionSnapshot {
+  battle: ArenaBattle | null
+  voteOutcome: ExperimentalVoteOutcome | null
+  selectedVote: VoteChoice | null
+  draftSetup: ExperimentalSetup
+  confirmedSetup: ExperimentalSetup | null
+  isEditingSetup: boolean
+  isShowingParameters: boolean
+  responseEdits: ResponseEditMap
+}
+
+function createDefaultSetup(): ExperimentalSetup {
+  return {
+    modelMode: DEFAULT_SETUP.modelMode,
+    parameterMode: DEFAULT_SETUP.parameterMode,
+    parameters: cloneDefaultParameterSettings(),
+  }
+}
+
+function readExperimentalArenaSessionSnapshot(): ExperimentalArenaSessionSnapshot | null {
+  return readLocalJson<ExperimentalArenaSessionSnapshot>(
+    EXPERIMENTAL_ARENA_SESSION_STORAGE_KEY,
+  )
+}
+
 function getResponseEditKey(turnNumber: number, side: EditableResponseSide): string {
   return `${turnNumber}:${side}`
 }
@@ -117,23 +150,34 @@ function createResponseState(originalResponse: string): EditableResponseState {
 
 export function ExperimentalArenaPage() {
   const { isAuthenticated, isInitializing } = useAuth()
-  const [battle, setBattle] = useState<ArenaBattle | null>(null)
-  const [voteOutcome, setVoteOutcome] = useState<ExperimentalVoteOutcome | null>(null)
-  const [selectedVote, setSelectedVote] = useState<VoteChoice | null>(null)
+  const savedSession = useMemo(readExperimentalArenaSessionSnapshot, [])
+  const [battle, setBattle] = useState<ArenaBattle | null>(savedSession?.battle ?? null)
+  const [voteOutcome, setVoteOutcome] = useState<ExperimentalVoteOutcome | null>(
+    savedSession?.voteOutcome ?? null,
+  )
+  const [selectedVote, setSelectedVote] = useState<VoteChoice | null>(
+    savedSession?.selectedVote ?? null,
+  )
   const [pendingPrompt, setPendingPrompt] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isVoting, setIsVoting] = useState(false)
-  const [draftSetup, setDraftSetup] = useState<ExperimentalSetup>({
-    modelMode: DEFAULT_SETUP.modelMode,
-    parameterMode: DEFAULT_SETUP.parameterMode,
-    parameters: cloneDefaultParameterSettings(),
-  })
-  const [confirmedSetup, setConfirmedSetup] = useState<ExperimentalSetup | null>(null)
-  const [isEditingSetup, setIsEditingSetup] = useState(true)
-  const [isShowingParameters, setIsShowingParameters] = useState(false)
+  const [draftSetup, setDraftSetup] = useState<ExperimentalSetup>(
+    savedSession?.draftSetup ?? createDefaultSetup(),
+  )
+  const [confirmedSetup, setConfirmedSetup] = useState<ExperimentalSetup | null>(
+    savedSession?.confirmedSetup ?? null,
+  )
+  const [isEditingSetup, setIsEditingSetup] = useState(
+    savedSession?.isEditingSetup ?? true,
+  )
+  const [isShowingParameters, setIsShowingParameters] = useState(
+    savedSession?.isShowingParameters ?? false,
+  )
   const [setupValidationMessage, setSetupValidationMessage] = useState<string | null>(null)
-  const [responseEdits, setResponseEdits] = useState<ResponseEditMap>({})
+  const [responseEdits, setResponseEdits] = useState<ResponseEditMap>(
+    savedSession?.responseEdits ?? {},
+  )
   const [savingEditKey, setSavingEditKey] = useState<string | null>(null)
   const turns = battle?.turns ?? []
   const latestTurn = turns.length > 0 ? turns[turns.length - 1] : null
@@ -153,6 +197,56 @@ export function ExperimentalArenaPage() {
 
     return 'Tie'
   }, [voteOutcome])
+
+  useEffect(() => {
+    if (isInitializing) {
+      return
+    }
+
+    if (!isAuthenticated) {
+      removeLocalJson(EXPERIMENTAL_ARENA_SESSION_STORAGE_KEY)
+      return
+    }
+
+    const hasMeaningfulSession =
+      battle ||
+      voteOutcome ||
+      selectedVote ||
+      confirmedSetup ||
+      !isEditingSetup ||
+      isShowingParameters ||
+      Object.keys(responseEdits).length > 0
+
+    if (!hasMeaningfulSession) {
+      removeLocalJson(EXPERIMENTAL_ARENA_SESSION_STORAGE_KEY)
+      return
+    }
+
+    writeLocalJson<ExperimentalArenaSessionSnapshot>(
+      EXPERIMENTAL_ARENA_SESSION_STORAGE_KEY,
+      {
+        battle,
+        voteOutcome,
+        selectedVote,
+        draftSetup,
+        confirmedSetup,
+        isEditingSetup,
+        isShowingParameters,
+        responseEdits,
+      },
+    )
+  }, [
+    battle,
+    confirmedSetup,
+    draftSetup,
+    isAuthenticated,
+    isInitializing,
+    isEditingSetup,
+    isShowingParameters,
+    responseEdits,
+    selectedVote,
+    voteOutcome,
+  ])
 
   async function syncBattleState(nextBattle: ArenaBattle) {
     try {
@@ -231,17 +325,14 @@ export function ExperimentalArenaPage() {
     setSelectedVote(null)
     setPendingPrompt(null)
     setError(null)
-    setDraftSetup({
-      modelMode: DEFAULT_SETUP.modelMode,
-      parameterMode: DEFAULT_SETUP.parameterMode,
-      parameters: cloneDefaultParameterSettings(),
-    })
+    setDraftSetup(createDefaultSetup())
     setConfirmedSetup(null)
     setIsEditingSetup(true)
     setIsShowingParameters(false)
     setSetupValidationMessage(null)
     setResponseEdits({})
     setSavingEditKey(null)
+    removeLocalJson(EXPERIMENTAL_ARENA_SESSION_STORAGE_KEY)
   }
 
   const experimentalClassName = [
@@ -529,7 +620,12 @@ export function ExperimentalArenaPage() {
         </div>
       ) : null}
 
-      {error ? <p className="leaderboard-error">{error}</p> : null}
+      {error ? (
+        <FriendlyErrorToast
+          message="We could not update the experiment."
+          detail={error}
+        />
+      ) : null}
 
       <section className="chat-space" aria-live="polite">
         {confirmedSetup && (turns.length > 0 || pendingPrompt) && !voteOutcome ? (

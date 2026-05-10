@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded'
@@ -9,6 +9,21 @@ import { continueChat, getAvailableChatModels, startChat } from '../api/chatApi'
 import type { ChatModel, ChatUiMessage } from '../types'
 import { useAuth } from '../../auth/context/AuthContext'
 import { AuthGateCard } from '../../auth/components/AuthGateCard'
+import {
+  readLocalJson,
+  removeLocalJson,
+  writeLocalJson,
+} from '../../../shared/storage/localJsonStorage'
+import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
+
+const CHAT_SESSION_STORAGE_KEY = 'makarena-chat-session-v1'
+
+interface ChatSessionSnapshot {
+  sessionId: string | null
+  messages: ChatUiMessage[]
+  selectedModelName: string
+  inputValue: string
+}
 
 function createMessage(role: ChatUiMessage['role'], content: string): ChatUiMessage {
   return {
@@ -18,13 +33,20 @@ function createMessage(role: ChatUiMessage['role'], content: string): ChatUiMess
   }
 }
 
+function readChatSessionSnapshot(): ChatSessionSnapshot | null {
+  return readLocalJson<ChatSessionSnapshot>(CHAT_SESSION_STORAGE_KEY)
+}
+
 export function ChatPage() {
   const { isAuthenticated, isInitializing } = useAuth()
+  const savedSession = useMemo(readChatSessionSnapshot, [])
   const [models, setModels] = useState<ChatModel[]>([])
-  const [selectedModelName, setSelectedModelName] = useState('')
-  const [sessionId, setSessionId] = useState<string | null>(null)
-  const [messages, setMessages] = useState<ChatUiMessage[]>([])
-  const [inputValue, setInputValue] = useState('')
+  const [selectedModelName, setSelectedModelName] = useState(
+    savedSession?.selectedModelName ?? '',
+  )
+  const [sessionId, setSessionId] = useState<string | null>(savedSession?.sessionId ?? null)
+  const [messages, setMessages] = useState<ChatUiMessage[]>(savedSession?.messages ?? [])
+  const [inputValue, setInputValue] = useState(savedSession?.inputValue ?? '')
   const [isLoadingModels, setIsLoadingModels] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -34,10 +56,18 @@ export function ChatPage() {
 
 
   useEffect(() => {
+    if (isInitializing) {
+      return
+    }
+
     if (!isAuthenticated) {
       setModels([])
       setSelectedModelName('')
+      setSessionId(null)
+      setMessages([])
+      setInputValue('')
       setIsLoadingModels(false)
+      removeLocalJson(CHAT_SESSION_STORAGE_KEY)
       return
     }
 
@@ -54,7 +84,7 @@ export function ChatPage() {
 
         setModels(data)
         if (data.length > 0) {
-          setSelectedModelName(data[0].name)
+          setSelectedModelName((current) => current || data[0].name)
         }
       } catch (loadError) {
         if (!isMounted) {
@@ -77,7 +107,25 @@ export function ChatPage() {
     return () => {
       isMounted = false
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, isInitializing])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return
+    }
+
+    if (!sessionId && messages.length === 0 && !inputValue.trim()) {
+      removeLocalJson(CHAT_SESSION_STORAGE_KEY)
+      return
+    }
+
+    writeLocalJson<ChatSessionSnapshot>(CHAT_SESSION_STORAGE_KEY, {
+      sessionId,
+      messages,
+      selectedModelName,
+      inputValue,
+    })
+  }, [inputValue, isAuthenticated, messages, selectedModelName, sessionId])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -136,7 +184,9 @@ export function ChatPage() {
   function resetSession() {
     setSessionId(null)
     setMessages([])
+    setInputValue('')
     setError(null)
+    removeLocalJson(CHAT_SESSION_STORAGE_KEY)
   }
 
   function selectModel(modelName: string) {
@@ -171,7 +221,12 @@ export function ChatPage() {
         </div>
       ) : null}
 
-      {error ? <p className="leaderboard-error">{error}</p> : null}
+      {error ? (
+        <FriendlyErrorToast
+          message="We could not update the chat."
+          detail={error}
+        />
+      ) : null}
 
       <section className="chat-space" aria-live="polite">
         {(
