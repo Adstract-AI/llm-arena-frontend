@@ -1,8 +1,9 @@
 import { env } from '../../shared/config/env'
+import { createClientId } from '../../shared/crypto/id'
 import type { OAuthProvider } from './types'
 
 function createOAuthState(): string {
-  return crypto.randomUUID()
+  return createClientId()
 }
 
 function buildRedirectUri(provider: OAuthProvider): string {

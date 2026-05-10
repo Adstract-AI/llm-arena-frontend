@@ -15,6 +15,7 @@ import {
   writeLocalJson,
 } from '../../../shared/storage/localJsonStorage'
 import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
+import { createClientId } from '../../../shared/crypto/id'
 
 const CHAT_SESSION_STORAGE_KEY = 'makarena-chat-session-v1'
 
@@ -27,7 +28,7 @@ interface ChatSessionSnapshot {
 
 function createMessage(role: ChatUiMessage['role'], content: string): ChatUiMessage {
   return {
-    id: `${role}-${crypto.randomUUID()}`,
+    id: `${role}-${createClientId()}`,
     role,
     content,
   }
