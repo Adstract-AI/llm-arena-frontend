@@ -5,6 +5,7 @@ import {
   getStoredAuthTokens,
   persistAccessToken,
 } from '../../features/auth/storage'
+import { createRateLimitError } from './rateLimit'
 
 if (!env.apiBaseUrl) {
   throw new Error('VITE_API_BASE_URL is not set. Configure it in your .env file.')
@@ -65,6 +66,14 @@ function parseErrorMessage(error: unknown): string {
   }
 
   return error instanceof Error ? error.message : 'Network request failed'
+}
+
+function parseRequestError(error: unknown): Error {
+  if (axios.isAxiosError(error) && error.response?.status === 429) {
+    return createRateLimitError(error.response.data as { window?: unknown } | null)
+  }
+
+  return new Error(parseErrorMessage(error))
 }
 
 export async function httpGet<T>(path: string, options?: RequestOptions): Promise<T> {
@@ -137,10 +146,10 @@ async function request<TResponse, TBody extends object | undefined = undefined>(
       } catch (refreshError) {
         clearStoredAuthSession()
         authFailureHandler?.()
-        throw new Error(parseErrorMessage(refreshError))
+        throw parseRequestError(refreshError)
       }
     }
 
-    throw new Error(parseErrorMessage(error))
+    throw parseRequestError(error)
   }
 }

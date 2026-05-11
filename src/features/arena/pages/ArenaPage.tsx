@@ -22,6 +22,7 @@ import {
 } from '../../../shared/storage/localJsonStorage'
 import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
 import { env } from '../../../shared/config/env'
+import { isRateLimitError } from '../../../shared/network/rateLimit'
 
 const ARENA_SESSION_STORAGE_KEY = 'makarena-arena-session-v1'
 
@@ -279,6 +280,9 @@ export function ArenaPage() {
                   }
 
                   if (event === 'done') {
+                    shouldScrollToNextResponseRef.current = false
+                    setPendingPrompt(null)
+                    setStreamingTurn(null)
                     setBattle(toArenaBattle(data as BattleStateResponse))
                   }
                 },
@@ -384,6 +388,9 @@ export function ArenaPage() {
                   }
 
                   if (event === 'done') {
+                    shouldScrollToNextResponseRef.current = false
+                    setPendingPrompt(null)
+                    setStreamingTurn(null)
                     setBattle(toArenaBattle(data as BattleStateResponse))
                   }
                 },
@@ -400,6 +407,11 @@ export function ArenaPage() {
       await syncBattleState(nextBattle)
     } catch (submissionError) {
       if (submissionError instanceof DOMException && submissionError.name === 'AbortError') {
+        return
+      }
+
+      if (isRateLimitError(submissionError)) {
+        setError(submissionError.message)
         return
       }
 
@@ -542,7 +554,7 @@ export function ArenaPage() {
 
       {error ? (
         <FriendlyErrorToast
-          message="We could not update the arena."
+          message="There was a problem with the arena."
           detail={error}
         />
       ) : null}
@@ -618,8 +630,6 @@ export function ArenaPage() {
                 <a
                   className="result-chip__model-link"
                   href={getModelDetailsLink(voteOutcome.answer1ModelName)}
-                  target="_blank"
-                  rel="noreferrer"
                 >
                   {voteOutcome.answer1ModelName}
                   <TbShare3 aria-hidden="true" className="model-link__icon" />
@@ -635,8 +645,6 @@ export function ArenaPage() {
                   <a
                     className="result-chip__model-link"
                     href={getModelDetailsLink(winnerLabel)}
-                    target="_blank"
-                    rel="noreferrer"
                   >
                     {winnerLabel}
                     <TbShare3 aria-hidden="true" className="model-link__icon" />
@@ -650,8 +658,6 @@ export function ArenaPage() {
                 <a
                   className="result-chip__model-link"
                   href={getModelDetailsLink(voteOutcome.answer2ModelName)}
-                  target="_blank"
-                  rel="noreferrer"
                 >
                   {voteOutcome.answer2ModelName}
                   <TbShare3 aria-hidden="true" className="model-link__icon" />

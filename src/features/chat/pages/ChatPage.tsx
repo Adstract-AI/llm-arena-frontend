@@ -23,6 +23,7 @@ import {
 import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
 import { createClientId } from '../../../shared/crypto/id'
 import { env } from '../../../shared/config/env'
+import { isRateLimitError } from '../../../shared/network/rateLimit'
 
 const CHAT_SESSION_STORAGE_KEY = 'makarena-chat-session-v1'
 
@@ -328,6 +329,11 @@ export function ChatPage() {
         return
       }
 
+      if (isRateLimitError(sendError)) {
+        setError(sendError.message)
+        return
+      }
+
       setError(
         sendError instanceof Error ? sendError.message : 'Could not send message.',
       )
@@ -351,7 +357,8 @@ export function ChatPage() {
     setIsModelMenuOpen(false)
   }
 
-  const modelControlDisabled = isLoadingModels || isSending || Boolean(sessionId)
+  const modelMenuDisabled = isLoadingModels || isSending || Boolean(sessionId)
+  const hasNoModels = !isLoadingModels && models.length === 0
 
   if (!isInitializing && !isAuthenticated) {
     return (
@@ -375,12 +382,18 @@ export function ChatPage() {
             Select a model and begin chatting. Get instant answers, explore topics,
             and interact naturally.
           </p>
+          {hasNoModels ? (
+            <div className="arena-note" aria-label="Chat unavailable">
+              <strong>Chat is temporarily unavailable.</strong>
+              <span>There are no active FINKI models available right now.</span>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
       {error ? (
         <FriendlyErrorToast
-          message="We could not update the chat."
+          message="There was a problem with the chat."
           detail={error}
         />
       ) : null}
@@ -446,12 +459,12 @@ export function ChatPage() {
                 type="button"
                 className="chat-composer__model-trigger"
                 onClick={() => setIsModelMenuOpen((current) => !current)}
-                disabled={modelControlDisabled}
+                disabled={modelMenuDisabled && !hasNoModels}
                 aria-haspopup="listbox"
                 aria-expanded={isModelMenuOpen}
               >
                 <span className="chat-composer__model-trigger-text">
-                  {selectedModelName || 'Choose model'}
+                  {selectedModelName || (hasNoModels ? 'No active models' : 'Choose model')}
                 </span>
                 <KeyboardArrowDownRoundedIcon
                   aria-hidden="true"
@@ -463,11 +476,16 @@ export function ChatPage() {
                 />
               </button>
 
-              {isModelMenuOpen && !modelControlDisabled ? (
+              {isModelMenuOpen && (!modelMenuDisabled || hasNoModels) ? (
                 <ul className="chat-composer__model-menu" role="listbox" aria-label="Choose model">
                   <li className="chat-composer__model-menu-title" aria-hidden="true">
                     Select Model
                   </li>
+                  {hasNoModels ? (
+                    <li className="chat-composer__model-menu-title" aria-hidden="true">
+                      No active FINKI models are available right now.
+                    </li>
+                  ) : null}
                   {models.map((model) => {
                     const tooltipId = `chat-model-info-${model.name.replace(/[^a-zA-Z0-9-_]/g, '-')}`
 
@@ -541,7 +559,12 @@ export function ChatPage() {
             <button
               type="submit"
               className="chat-composer__send"
-              disabled={isLoadingModels || isSending || !selectedModelName || !inputValue.trim()}
+              disabled={
+                isLoadingModels ||
+                isSending ||
+                !selectedModelName ||
+                !inputValue.trim()
+              }
               aria-label={isSending ? 'Sending message' : 'Send message'}
             >
               <SendRoundedIcon aria-hidden="true" className="chat-composer__send-icon" />
