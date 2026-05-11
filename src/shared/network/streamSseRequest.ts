@@ -4,6 +4,7 @@ import {
   getStoredAuthTokens,
   persistAccessToken,
 } from '../../features/auth/storage'
+import { createRateLimitError } from './rateLimit'
 
 interface StreamSseRequestOptions {
   auth?: boolean
@@ -60,18 +61,24 @@ async function readJsonSafely<T>(response: Response): Promise<T | null> {
   }
 }
 
-async function readErrorMessage(response: Response): Promise<string> {
-  const data = await readJsonSafely<{ detail?: string; message?: string; error?: string }>(response)
+async function readResponseError(response: Response): Promise<Error> {
+  const data = await readJsonSafely<{ detail?: string; message?: string; error?: string; window?: unknown }>(
+    response,
+  )
+
+  if (response.status === 429) {
+    return createRateLimitError(data)
+  }
 
   if (data?.detail || data?.message || data?.error) {
-    return data.detail ?? data.message ?? data.error ?? 'Network request failed'
+    return new Error(data.detail ?? data.message ?? data.error ?? 'Network request failed')
   }
 
   try {
     const text = await response.text()
-    return text.trim() || `Request failed with status ${response.status}`
+    return new Error(text.trim() || `Request failed with status ${response.status}`)
   } catch {
-    return `Request failed with status ${response.status}`
+    return new Error(`Request failed with status ${response.status}`)
   }
 }
 
@@ -140,7 +147,7 @@ export async function streamSseRequest<TBody extends object>(
   }
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response))
+    throw await readResponseError(response)
   }
 
   if (!response.body) {

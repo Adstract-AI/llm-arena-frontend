@@ -32,6 +32,7 @@ import {
 } from '../../../shared/storage/localJsonStorage'
 import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
 import { env } from '../../../shared/config/env'
+import { isRateLimitError } from '../../../shared/network/rateLimit'
 import type {
   ExperimentalDistributionType,
   ExperimentalParameterKey,
@@ -445,6 +446,9 @@ export function ExperimentalArenaPage() {
           }
 
           if (event === 'done') {
+            shouldScrollToNextResponseRef.current = false
+            setPendingPrompt(null)
+            setStreamingTurn(null)
             setBattle(toArenaBattle(data as BattleStateResponse))
           }
         }
@@ -476,6 +480,11 @@ export function ExperimentalArenaPage() {
       await syncBattleState(nextBattle)
     } catch (submissionError) {
       if (submissionError instanceof DOMException && submissionError.name === 'AbortError') {
+        return
+      }
+
+      if (isRateLimitError(submissionError)) {
+        setError(submissionError.message)
         return
       }
 
@@ -866,7 +875,7 @@ export function ExperimentalArenaPage() {
 
       {error ? (
         <FriendlyErrorToast
-          message="We could not update the experiment."
+          message="There was a problem with the experiment."
           detail={error}
         />
       ) : null}
