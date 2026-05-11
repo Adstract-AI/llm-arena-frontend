@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import type { OAuthProvider } from '../types'
+import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
 
 interface OAuthCallbackPageProps {
   provider: OAuthProvider
@@ -69,7 +70,10 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
       <section className="auth-card auth-card--callback auth-card--callback-minimal">
         {error ? (
           <div className="auth-card__error-state">
-            <p className="leaderboard-error">{error}</p>
+            <FriendlyErrorToast
+              message="We could not finish sign in."
+              detail={error}
+            />
             <Link to="/login" className="btn btn--ghost">
               Back to Login
             </Link>

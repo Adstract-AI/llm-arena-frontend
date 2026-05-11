@@ -1,9 +1,10 @@
 import { httpGet, httpPost } from '../../../shared/network/httpClient'
+import { streamSseRequest, type SseMessage } from '../../../shared/network/streamSseRequest'
 import type { ArenaBattle, ArenaTurn, VoteChoice, VoteOutcome } from '../types'
 
 type ApiSlot = 'A' | 'B'
 
-interface BattleStateResponse {
+export interface BattleStateResponse {
   id: string
   status: string
   can_vote: boolean
@@ -16,6 +17,27 @@ interface BattleStateResponse {
       improvement_text?: string | null
     }>
   }>
+}
+
+export type ArenaStreamSlot = ApiSlot
+
+export type ArenaStreamEventName =
+  | 'battle_created'
+  | 'turn_created'
+  | 'response_started'
+  | 'response_delta'
+  | 'response_completed'
+  | 'response_failed'
+  | 'turn_completed'
+  | 'battle_failed'
+  | 'done'
+
+export type ArenaStreamEvent = SseMessage & {
+  event: ArenaStreamEventName
+}
+
+export interface ArenaStreamHandlers {
+  onEvent: (event: ArenaStreamEvent) => void | Promise<void>
 }
 
 interface VoteResponse {
@@ -93,13 +115,27 @@ function toArenaTurn(turn: BattleStateResponse['turns'][number]): ArenaTurn {
   }
 }
 
-function toArenaBattle(response: BattleStateResponse): ArenaBattle {
+export function toArenaBattle(response: BattleStateResponse): ArenaBattle {
   return {
     battleId: response.id,
     status: response.status,
     canVote: response.can_vote,
     turns: response.turns.map(toArenaTurn),
   }
+}
+
+function streamArenaRequest<TBody extends object>(
+  path: string,
+  body: TBody,
+  handlers: ArenaStreamHandlers,
+  signal?: AbortSignal,
+  auth = false,
+): Promise<void> {
+  return streamSseRequest(path, body, {
+    auth,
+    signal,
+    onEvent: (event) => handlers.onEvent(event as ArenaStreamEvent),
+  })
 }
 
 export async function startBattle(prompt: string): Promise<ArenaBattle> {
@@ -112,6 +148,20 @@ export async function startBattle(prompt: string): Promise<ArenaBattle> {
   return toArenaBattle(response)
 }
 
+export function startBattleStream(
+  prompt: string,
+  handlers: ArenaStreamHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  return streamArenaRequest(
+    '/api/arena/battles/stream/',
+    { prompt },
+    handlers,
+    signal,
+    false,
+  )
+}
+
 export async function continueBattle(battleId: string, prompt: string): Promise<ArenaBattle> {
   const response = await httpPost<BattleStateResponse, { prompt: string }>(
     `/api/arena/battles/${encodeURIComponent(battleId)}/turns/`,
@@ -120,6 +170,21 @@ export async function continueBattle(battleId: string, prompt: string): Promise<
   )
 
   return toArenaBattle(response)
+}
+
+export function continueBattleStream(
+  battleId: string,
+  prompt: string,
+  handlers: ArenaStreamHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  return streamArenaRequest(
+    `/api/arena/battles/${encodeURIComponent(battleId)}/turns/stream/`,
+    { prompt },
+    handlers,
+    signal,
+    false,
+  )
 }
 
 export async function getBattleDetails(battleId: string): Promise<ArenaBattle> {

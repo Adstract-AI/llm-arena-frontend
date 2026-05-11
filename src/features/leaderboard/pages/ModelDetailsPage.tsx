@@ -5,6 +5,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import { Link, useParams } from 'react-router-dom'
 import { getModelDetails } from '../api/leaderboardApi'
 import type { ModelDetails } from '../types'
+import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
 
 function SectionHeader({ title, details }: { title: string; details: string[] }) {
   const tooltipId = `section-info-${title.toLowerCase().replace(/\s+/g, '-')}`
@@ -146,7 +147,10 @@ export function ModelDetailsPage() {
 
         {error ? (
           <div className="leaderboard-card">
-            <p className="leaderboard-error">{error}</p>
+            <FriendlyErrorToast
+              message="We could not load this model profile."
+              detail={error}
+            />
           </div>
         ) : null}
 

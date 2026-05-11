@@ -3,6 +3,7 @@ import SwapVertRoundedIcon from '@mui/icons-material/SwapVertRounded'
 import { Link, useNavigate } from 'react-router-dom'
 import { getLeaderboard } from '../api/leaderboardApi'
 import type { LeaderboardModel } from '../types'
+import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
 
 type NumericSortKey =
   | 'eloScore'
@@ -241,7 +242,12 @@ export function LeaderboardPage() {
           </div>
         ) : null}
 
-        {error ? <p className="leaderboard-error">{error}</p> : null}
+        {error ? (
+          <FriendlyErrorToast
+            message="We could not load the leaderboard."
+            detail={error}
+          />
+        ) : null}
 
         {!isLoading && !error && models.length > 0 ? (
           <>

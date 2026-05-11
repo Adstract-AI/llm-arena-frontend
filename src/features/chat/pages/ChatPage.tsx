@@ -1,43 +1,82 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded'
 import SendRoundedIcon from '@mui/icons-material/SendRounded'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { continueChat, getAvailableChatModels, startChat } from '../api/chatApi'
+import {
+  continueChat,
+  continueChatStream,
+  getAvailableChatModels,
+  startChat,
+  startChatStream,
+} from '../api/chatApi'
 import type { ChatModel, ChatUiMessage } from '../types'
 import { useAuth } from '../../auth/context/AuthContext'
 import { AuthGateCard } from '../../auth/components/AuthGateCard'
+import {
+  readLocalJson,
+  removeLocalJson,
+  writeLocalJson,
+} from '../../../shared/storage/localJsonStorage'
+import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
+import { createClientId } from '../../../shared/crypto/id'
+import { env } from '../../../shared/config/env'
+import { isRateLimitError } from '../../../shared/network/rateLimit'
+
+const CHAT_SESSION_STORAGE_KEY = 'makarena-chat-session-v1'
+
+interface ChatSessionSnapshot {
+  sessionId: string | null
+  messages: ChatUiMessage[]
+  selectedModelName: string
+  inputValue: string
+}
 
 function createMessage(role: ChatUiMessage['role'], content: string): ChatUiMessage {
   return {
-    id: `${role}-${crypto.randomUUID()}`,
+    id: `${role}-${createClientId()}`,
     role,
     content,
   }
 }
 
+function readChatSessionSnapshot(): ChatSessionSnapshot | null {
+  return readLocalJson<ChatSessionSnapshot>(CHAT_SESSION_STORAGE_KEY)
+}
+
 export function ChatPage() {
   const { isAuthenticated, isInitializing } = useAuth()
+  const savedSession = useMemo(readChatSessionSnapshot, [])
   const [models, setModels] = useState<ChatModel[]>([])
-  const [selectedModelName, setSelectedModelName] = useState('')
-  const [sessionId, setSessionId] = useState<string | null>(null)
-  const [messages, setMessages] = useState<ChatUiMessage[]>([])
-  const [inputValue, setInputValue] = useState('')
+  const [selectedModelName, setSelectedModelName] = useState(
+    savedSession?.selectedModelName ?? '',
+  )
+  const [sessionId, setSessionId] = useState<string | null>(savedSession?.sessionId ?? null)
+  const [messages, setMessages] = useState<ChatUiMessage[]>(savedSession?.messages ?? [])
+  const [inputValue, setInputValue] = useState(savedSession?.inputValue ?? '')
   const [isLoadingModels, setIsLoadingModels] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isModelMenuOpen, setIsModelMenuOpen] = useState(false)
   const modelMenuRef = useRef<HTMLDivElement | null>(null)
-
+  const streamAbortRef = useRef<AbortController | null>(null)
 
 
   useEffect(() => {
+    if (isInitializing) {
+      return
+    }
+
     if (!isAuthenticated) {
       setModels([])
       setSelectedModelName('')
+      setSessionId(null)
+      setMessages([])
+      setInputValue('')
       setIsLoadingModels(false)
+      removeLocalJson(CHAT_SESSION_STORAGE_KEY)
       return
     }
 
@@ -54,7 +93,7 @@ export function ChatPage() {
 
         setModels(data)
         if (data.length > 0) {
-          setSelectedModelName(data[0].name)
+          setSelectedModelName((current) => current || data[0].name)
         }
       } catch (loadError) {
         if (!isMounted) {
@@ -77,7 +116,25 @@ export function ChatPage() {
     return () => {
       isMounted = false
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, isInitializing])
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return
+    }
+
+    if (!sessionId && messages.length === 0 && !inputValue.trim()) {
+      removeLocalJson(CHAT_SESSION_STORAGE_KEY)
+      return
+    }
+
+    writeLocalJson<ChatSessionSnapshot>(CHAT_SESSION_STORAGE_KEY, {
+      sessionId,
+      messages,
+      selectedModelName,
+      inputValue,
+    })
+  }, [inputValue, isAuthenticated, messages, selectedModelName, sessionId])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -102,6 +159,53 @@ export function ChatPage() {
     }
   }, [sessionId, isSending])
 
+  useEffect(() => {
+    return () => {
+      streamAbortRef.current?.abort()
+    }
+  }, [])
+
+  function getPayloadText(payload: unknown, key: 'text' | 'response_text' | 'error'): string {
+    if (!payload || typeof payload !== 'object' || !(key in payload)) {
+      return ''
+    }
+
+    const value = (payload as Record<string, unknown>)[key]
+    return typeof value === 'string' ? value : ''
+  }
+
+  function getPayloadSessionId(payload: unknown): string {
+    if (!payload || typeof payload !== 'object' || !('session_id' in payload)) {
+      return ''
+    }
+
+    const value = (payload as Record<string, unknown>).session_id
+    return typeof value === 'string' ? value : ''
+  }
+
+  function upsertAssistantMessage(
+    messageId: string,
+    updater: (message: ChatUiMessage) => ChatUiMessage,
+  ) {
+    setMessages((previous) => {
+      const existingMessage = previous.find((message) => message.id === messageId)
+
+      if (!existingMessage) {
+        return [
+          ...previous,
+          updater({
+            id: messageId,
+            role: 'assistant',
+            content: '',
+            status: 'streaming',
+          }),
+        ]
+      }
+
+      return previous.map((message) => (message.id === messageId ? updater(message) : message))
+    })
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const trimmed = inputValue.trim()
@@ -115,6 +219,102 @@ export function ChatPage() {
     setIsSending(true)
 
     try {
+      if (env.enableStreaming) {
+        const assistantMessageId = `assistant-${createClientId()}`
+        const abortController = new AbortController()
+        streamAbortRef.current = abortController
+
+        const handleStreamEvent = async (event: string, data: unknown) => {
+          if (event === 'session_created' || event === 'session_loaded') {
+            const nextSessionId = getPayloadSessionId(data)
+            if (nextSessionId) {
+              setSessionId(nextSessionId)
+            }
+            return
+          }
+
+          if (event === 'response_started') {
+            upsertAssistantMessage(assistantMessageId, (message) => ({
+              ...message,
+              status: 'streaming',
+            }))
+            return
+          }
+
+          if (event === 'response_delta') {
+            const text = getPayloadText(data, 'text')
+            if (!text) {
+              return
+            }
+
+            upsertAssistantMessage(assistantMessageId, (message) => ({
+              ...message,
+              content: `${message.content}${text}`,
+              status: 'streaming',
+            }))
+            return
+          }
+
+          if (event === 'response_completed') {
+            const responseText = getPayloadText(data, 'response_text')
+            const nextSessionId = getPayloadSessionId(data)
+            if (nextSessionId) {
+              setSessionId(nextSessionId)
+            }
+            upsertAssistantMessage(assistantMessageId, (message) => ({
+              ...message,
+              content: responseText || message.content,
+              status: 'complete',
+            }))
+            return
+          }
+
+          if (event === 'response_failed') {
+            setMessages((previous) =>
+              previous.filter((message) => message.id !== assistantMessageId),
+            )
+            setError(
+              getPayloadText(data, 'error') || 'The model could not finish its response.',
+            )
+            return
+          }
+
+          if (event === 'done') {
+            const responseText = getPayloadText(data, 'response_text')
+            const nextSessionId = getPayloadSessionId(data)
+            if (nextSessionId) {
+              setSessionId(nextSessionId)
+            }
+            upsertAssistantMessage(assistantMessageId, (message) => ({
+              ...message,
+              content: responseText || message.content,
+              status: 'complete',
+            }))
+          }
+        }
+
+        await (sessionId
+          ? continueChatStream(
+              sessionId,
+              selectedModelName,
+              trimmed,
+              {
+                onEvent: ({ event, data }) => handleStreamEvent(event, data),
+              },
+              abortController.signal,
+            )
+          : startChatStream(
+              selectedModelName,
+              trimmed,
+              {
+                onEvent: ({ event, data }) => handleStreamEvent(event, data),
+              },
+              abortController.signal,
+            ))
+
+        return
+      }
+
       const response = sessionId
         ? await continueChat(sessionId, selectedModelName, trimmed)
         : await startChat(selectedModelName, trimmed)
@@ -125,18 +325,31 @@ export function ChatPage() {
         createMessage('assistant', response.responseText),
       ])
     } catch (sendError) {
+      if (sendError instanceof DOMException && sendError.name === 'AbortError') {
+        return
+      }
+
+      if (isRateLimitError(sendError)) {
+        setError(sendError.message)
+        return
+      }
+
       setError(
         sendError instanceof Error ? sendError.message : 'Could not send message.',
       )
     } finally {
+      streamAbortRef.current = null
       setIsSending(false)
     }
   }
 
   function resetSession() {
+    streamAbortRef.current?.abort()
     setSessionId(null)
     setMessages([])
+    setInputValue('')
     setError(null)
+    removeLocalJson(CHAT_SESSION_STORAGE_KEY)
   }
 
   function selectModel(modelName: string) {
@@ -144,7 +357,8 @@ export function ChatPage() {
     setIsModelMenuOpen(false)
   }
 
-  const modelControlDisabled = isLoadingModels || isSending || Boolean(sessionId)
+  const modelMenuDisabled = isLoadingModels || isSending || Boolean(sessionId)
+  const hasNoModels = !isLoadingModels && models.length === 0
 
   if (!isInitializing && !isAuthenticated) {
     return (
@@ -168,10 +382,21 @@ export function ChatPage() {
             Select a model and begin chatting. Get instant answers, explore topics,
             and interact naturally.
           </p>
+          {hasNoModels ? (
+            <div className="arena-note" aria-label="Chat unavailable">
+              <strong>Chat is temporarily unavailable.</strong>
+              <span>There are no active FINKI models available right now.</span>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
-      {error ? <p className="leaderboard-error">{error}</p> : null}
+      {error ? (
+        <FriendlyErrorToast
+          message="There was a problem with the chat."
+          detail={error}
+        />
+      ) : null}
 
       <section className="chat-space" aria-live="polite">
         {(
@@ -194,6 +419,13 @@ export function ChatPage() {
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>
                     {message.content}
                   </ReactMarkdown>
+                  {message.status === 'streaming' ? (
+                    <div className="typing-indicator typing-indicator--inline" aria-label="Generating response">
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                  ) : null}
                 </div>
               ) : (
                 <p className="chat-message__text">{message.content}</p>
@@ -202,7 +434,7 @@ export function ChatPage() {
           ))
         )}
 
-        {isSending ? (
+        {isSending && !env.enableStreaming ? (
           <article className="chat-message chat-message--assistant chat-message--loading">
             <p className="chat-message__role chat-message__role--model">
               {selectedModelName || 'Model'}
@@ -227,12 +459,12 @@ export function ChatPage() {
                 type="button"
                 className="chat-composer__model-trigger"
                 onClick={() => setIsModelMenuOpen((current) => !current)}
-                disabled={modelControlDisabled}
+                disabled={modelMenuDisabled && !hasNoModels}
                 aria-haspopup="listbox"
                 aria-expanded={isModelMenuOpen}
               >
                 <span className="chat-composer__model-trigger-text">
-                  {selectedModelName || 'Choose model'}
+                  {selectedModelName || (hasNoModels ? 'No active models' : 'Choose model')}
                 </span>
                 <KeyboardArrowDownRoundedIcon
                   aria-hidden="true"
@@ -244,11 +476,16 @@ export function ChatPage() {
                 />
               </button>
 
-              {isModelMenuOpen && !modelControlDisabled ? (
+              {isModelMenuOpen && (!modelMenuDisabled || hasNoModels) ? (
                 <ul className="chat-composer__model-menu" role="listbox" aria-label="Choose model">
                   <li className="chat-composer__model-menu-title" aria-hidden="true">
                     Select Model
                   </li>
+                  {hasNoModels ? (
+                    <li className="chat-composer__model-menu-title" aria-hidden="true">
+                      No active FINKI models are available right now.
+                    </li>
+                  ) : null}
                   {models.map((model) => {
                     const tooltipId = `chat-model-info-${model.name.replace(/[^a-zA-Z0-9-_]/g, '-')}`
 
@@ -322,7 +559,12 @@ export function ChatPage() {
             <button
               type="submit"
               className="chat-composer__send"
-              disabled={isLoadingModels || isSending || !selectedModelName || !inputValue.trim()}
+              disabled={
+                isLoadingModels ||
+                isSending ||
+                !selectedModelName ||
+                !inputValue.trim()
+              }
               aria-label={isSending ? 'Sending message' : 'Send message'}
             >
               <SendRoundedIcon aria-hidden="true" className="chat-composer__send-icon" />
