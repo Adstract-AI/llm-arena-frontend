@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import type { OAuthProvider } from '../types'
+import { useI18n } from '../../../shared/i18n/I18nContext'
 
 interface OAuthCallbackPageProps {
   provider: OAuthProvider
@@ -10,6 +11,7 @@ interface OAuthCallbackPageProps {
 export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
   const [searchParams] = useSearchParams()
   const { completeOAuthLogin, isAuthenticated, isInitializing } = useAuth()
+  const { strings } = useI18n()
   const [error, setError] = useState<string | null>(null)
   const hasStartedRef = useRef(false)
   const hasRedirectedRef = useRef(false)
@@ -35,7 +37,7 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
 
       if (!code) {
         if (isMounted) {
-          setError('The provider did not return a login code. Please try again.')
+          setError(strings.auth.callbackMissingCode)
         }
         return
       }
@@ -49,9 +51,7 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
       } catch (callbackError) {
         if (isMounted) {
           setError(
-            callbackError instanceof Error
-              ? callbackError.message
-              : 'Could not complete login.',
+            callbackError instanceof Error ? callbackError.message : strings.auth.callbackFailed,
           )
         }
       }
@@ -71,13 +71,13 @@ export function OAuthCallbackPage({ provider }: OAuthCallbackPageProps) {
           <div className="auth-card__error-state">
             <p className="leaderboard-error">{error}</p>
             <Link to="/login" className="btn btn--ghost">
-              Back to Login
+              {strings.auth.backToLogin}
             </Link>
           </div>
         ) : (
           <div className="auth-callback-status" role="status" aria-live="polite">
             <span className="auth-callback-status__spinner" aria-hidden="true" />
-            <span>Signing you in…</span>
+            <span>{strings.auth.signingIn}</span>
           </div>
         )}
       </section>

@@ -9,6 +9,7 @@ import { continueChat, getAvailableChatModels, startChat } from '../api/chatApi'
 import type { ChatModel, ChatUiMessage } from '../types'
 import { useAuth } from '../../auth/context/AuthContext'
 import { AuthGateCard } from '../../auth/components/AuthGateCard'
+import { useI18n } from '../../../shared/i18n/I18nContext'
 
 function createMessage(role: ChatUiMessage['role'], content: string): ChatUiMessage {
   return {
@@ -20,6 +21,7 @@ function createMessage(role: ChatUiMessage['role'], content: string): ChatUiMess
 
 export function ChatPage() {
   const { isAuthenticated, isInitializing } = useAuth()
+  const { strings } = useI18n()
   const [models, setModels] = useState<ChatModel[]>([])
   const [selectedModelName, setSelectedModelName] = useState('')
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -62,9 +64,7 @@ export function ChatPage() {
         }
 
         setError(
-          loadError instanceof Error
-            ? loadError.message
-            : 'Could not load chat models.',
+          loadError instanceof Error ? loadError.message : strings.chat.couldNotLoadModels,
         )
       } finally {
         if (isMounted) {
@@ -77,7 +77,7 @@ export function ChatPage() {
     return () => {
       isMounted = false
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, strings.chat.couldNotLoadModels])
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -126,7 +126,7 @@ export function ChatPage() {
       ])
     } catch (sendError) {
       setError(
-        sendError instanceof Error ? sendError.message : 'Could not send message.',
+        sendError instanceof Error ? sendError.message : strings.chat.couldNotSendMessage,
       )
     } finally {
       setIsSending(false)
@@ -150,8 +150,8 @@ export function ChatPage() {
     return (
       <section className="chat-session">
         <AuthGateCard
-          title="Sign in to use Chat"
-          description="Sign in to start chatting and keep your conversations saved."
+          title={strings.auth.chatGateTitle}
+          description={strings.auth.chatGateDescription}
           returnPath="/chat"
         />
       </section>
@@ -162,12 +162,9 @@ export function ChatPage() {
     <section className="chat-session">
       {messages.length === 0 ? (
         <div className="page-card page-card--helper">
-          <p className="eyebrow">Chat</p>
-          <h2>Start a conversation.</h2>
-          <p>
-            Select a model and begin chatting. Get instant answers, explore topics,
-            and interact naturally.
-          </p>
+          <p className="eyebrow">{strings.chat.eyebrow}</p>
+          <h2>{strings.chat.introTitle}</h2>
+          <p>{strings.chat.introBody}</p>
         </div>
       ) : null}
 
@@ -186,7 +183,7 @@ export function ChatPage() {
             >
               {message.role === 'assistant' ? (
                 <p className="chat-message__role chat-message__role--model">
-                  {selectedModelName || 'Model'}
+                  {selectedModelName || strings.chat.modelFallback}
                 </p>
               ) : null}
               {message.role === 'assistant' ? (
@@ -205,9 +202,9 @@ export function ChatPage() {
         {isSending ? (
           <article className="chat-message chat-message--assistant chat-message--loading">
             <p className="chat-message__role chat-message__role--model">
-              {selectedModelName || 'Model'}
+              {selectedModelName || strings.chat.modelFallback}
             </p>
-            <div className="typing-indicator" aria-label="Generating response">
+            <div className="typing-indicator" aria-label={strings.chat.generatingResponse}>
               <span />
               <span />
               <span />
@@ -218,7 +215,7 @@ export function ChatPage() {
 
       <form className="prompt-form" onSubmit={handleSubmit}>
         <label htmlFor="chat-message-input" className="sr-only">
-          Your message
+          {strings.chat.messageLabel}
         </label>
         <div className="chat-composer">
           <div className="chat-composer__toolbar">
@@ -232,7 +229,7 @@ export function ChatPage() {
                 aria-expanded={isModelMenuOpen}
               >
                 <span className="chat-composer__model-trigger-text">
-                  {selectedModelName || 'Choose model'}
+                  {selectedModelName || strings.chat.chooseModel}
                 </span>
                 <KeyboardArrowDownRoundedIcon
                   aria-hidden="true"
@@ -245,9 +242,13 @@ export function ChatPage() {
               </button>
 
               {isModelMenuOpen && !modelControlDisabled ? (
-                <ul className="chat-composer__model-menu" role="listbox" aria-label="Choose model">
+                <ul
+                  className="chat-composer__model-menu"
+                  role="listbox"
+                  aria-label={strings.chat.chooseModelList}
+                >
                   <li className="chat-composer__model-menu-title" aria-hidden="true">
-                    Select Model
+                    {strings.chat.selectModel}
                   </li>
                   {models.map((model) => {
                     const tooltipId = `chat-model-info-${model.name.replace(/[^a-zA-Z0-9-_]/g, '-')}`
@@ -274,7 +275,7 @@ export function ChatPage() {
                         <button
                           type="button"
                           className="chat-composer__model-info"
-                          aria-label={`About ${model.name}`}
+                          aria-label={strings.chat.aboutModel(model.name)}
                           aria-describedby={tooltipId}
                           onClick={(event) => {
                             event.stopPropagation()
@@ -290,7 +291,7 @@ export function ChatPage() {
                           role="tooltip"
                           className="chat-composer__model-tooltip"
                         >
-                          {model.description || 'No description available.'}
+                          {model.description || strings.chat.noDescription}
                         </span>
                       </span>
                     </li>
@@ -306,7 +307,7 @@ export function ChatPage() {
               onClick={resetSession}
               disabled={messages.length === 0}
             >
-              New Session
+              {strings.chat.newSession}
             </button>
           </div>
 
@@ -314,7 +315,7 @@ export function ChatPage() {
             <input
               id="chat-message-input"
               className="chat-composer__input"
-              placeholder="Write a message..."
+              placeholder={strings.chat.placeholder}
               value={inputValue}
               onChange={(event) => setInputValue(event.target.value)}
               disabled={isLoadingModels || isSending || !selectedModelName}
@@ -323,7 +324,8 @@ export function ChatPage() {
               type="submit"
               className="chat-composer__send"
               disabled={isLoadingModels || isSending || !selectedModelName || !inputValue.trim()}
-              aria-label={isSending ? 'Sending message' : 'Send message'}
+              aria-label={strings.chat.sendMessage}
+              title={strings.chat.sendMessage}
             >
               <SendRoundedIcon aria-hidden="true" className="chat-composer__send-icon" />
             </button>

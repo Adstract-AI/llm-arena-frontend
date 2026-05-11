@@ -3,6 +3,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { VoteChoice } from '../../arena/types'
+import { useI18n } from '../../../shared/i18n/I18nContext'
 
 type EditableResponseSide = 'A' | 'B'
 
@@ -65,6 +66,7 @@ export function EditableResponsePair({
   onSubmitEdit,
   onToggleEdited,
 }: EditableResponsePairProps) {
+  const { strings } = useI18n()
   const canSelect = Boolean(onSelectVote) && !disabled
 
   function handleCardSelect(vote: VoteChoice) {
@@ -78,7 +80,7 @@ export function EditableResponsePair({
 
   function renderCard(
     side: EditableResponseSide,
-    label: 'Model 1' | 'Model 2',
+    label: string,
     vote: 'modelA' | 'modelB',
     modelName: string | undefined,
     state: EditableResponseState,
@@ -122,7 +124,9 @@ export function EditableResponsePair({
                 }
               : undefined
           }
-          aria-label={`Select ${label.toLowerCase()}`}
+          aria-label={
+            vote === 'modelA' ? strings.arena.selectModel1 : strings.arena.selectModel2
+          }
         >
           {canEditLatest || state.editedResponse ? (
             <div className="response-card__actions">
@@ -134,13 +138,19 @@ export function EditableResponsePair({
                       ? 'response-card__icon-btn response-card__icon-btn--submitted response-card__icon-btn--active'
                       : 'response-card__icon-btn response-card__icon-btn--submitted'
                   }
-                  data-tooltip={state.isShowingEdited ? 'Original response' : 'Submitted edition'}
+                  data-tooltip={
+                    state.isShowingEdited
+                      ? strings.experimental.originalResponse
+                      : strings.experimental.submittedEdition
+                  }
                   onClick={(event) => {
                     event.stopPropagation()
                     onToggleEdited(side)
                   }}
                   aria-label={
-                    state.isShowingEdited ? 'Show original response' : 'Show edited response'
+                    state.isShowingEdited
+                      ? strings.experimental.showOriginalResponse
+                      : strings.experimental.showEditedResponse
                   }
                 >
                   <CheckCircleRoundedIcon aria-hidden="true" />
@@ -161,8 +171,8 @@ export function EditableResponsePair({
                   }}
                   aria-label={
                     state.isEditing
-                      ? `Close editor for ${label.toLowerCase()}`
-                      : `Edit ${label.toLowerCase()}`
+                      ? strings.experimental.closeEditorFor(label)
+                      : strings.experimental.editLabel(label)
                   }
                 >
                   <EditRoundedIcon aria-hidden="true" />
@@ -181,7 +191,7 @@ export function EditableResponsePair({
                   className="response-card__textarea"
                   value={state.draftResponse}
                   onChange={(event) => onDraftChange(side, event.target.value)}
-                  placeholder="Refine this response..."
+                  placeholder={strings.experimental.refineResponse}
                 />
                 <div className="response-card__edit-footer">
                   <button
@@ -190,7 +200,7 @@ export function EditableResponsePair({
                     disabled={isSubmittingEdit}
                     onClick={() => onSubmitEdit(side)}
                   >
-                    {isSubmittingEdit ? 'Saving...' : 'Submit'}
+                    {isSubmittingEdit ? strings.experimental.saving : strings.experimental.submit}
                   </button>
                 </div>
               </div>
@@ -207,7 +217,7 @@ export function EditableResponsePair({
     <section className="duel-grid" aria-live="polite">
       {renderCard(
         'A',
-        'Model 1',
+        strings.arena.voteModel1,
         'modelA',
         reveal ? revealedModels?.answer1Model : undefined,
         answerAState,
@@ -215,7 +225,7 @@ export function EditableResponsePair({
       )}
       {renderCard(
         'B',
-        'Model 2',
+        strings.arena.voteModel2,
         'modelB',
         reveal ? revealedModels?.answer2Model : undefined,
         answerBState,

@@ -6,8 +6,10 @@ import { PromptInput } from '../components/PromptInput'
 import { ResponsePair } from '../components/ResponsePair'
 import { VotePanel } from '../components/VotePanel'
 import type { ArenaBattle, ArenaTurn, VoteChoice, VoteOutcome } from '../types'
+import { useI18n } from '../../../shared/i18n/I18nContext'
 
 export function ArenaPage() {
+  const { strings } = useI18n()
   const [battle, setBattle] = useState<ArenaBattle | null>(null)
   const [voteOutcome, setVoteOutcome] = useState<VoteOutcome | null>(null)
   const [selectedVote, setSelectedVote] = useState<VoteChoice | null>(null)
@@ -31,8 +33,8 @@ export function ArenaPage() {
       return voteOutcome.answer2ModelName
     }
 
-    return 'Tie'
-  }, [voteOutcome])
+    return strings.arena.tie
+  }, [strings.arena.tie, voteOutcome])
 
   async function syncBattleState(nextBattle: ArenaBattle) {
     try {
@@ -62,7 +64,7 @@ export function ArenaPage() {
       setError(
         submissionError instanceof Error
           ? submissionError.message
-          : 'Could not process your prompt.',
+          : strings.arena.couldNotProcessPrompt,
       )
     } finally {
       setIsGenerating(false)
@@ -83,9 +85,7 @@ export function ArenaPage() {
       await syncBattleState(battle)
     } catch (voteError) {
       setError(
-        voteError instanceof Error
-          ? voteError.message
-          : 'Could not submit your vote.',
+        voteError instanceof Error ? voteError.message : strings.arena.couldNotSubmitVote,
       )
     } finally {
       setIsVoting(false)
@@ -124,7 +124,7 @@ export function ArenaPage() {
         </article>
 
         <article className="chat-message chat-message--assistant chat-message--duel">
-          <p className="chat-message__role">Responses</p>
+          <p className="chat-message__role">{strings.arena.responses}</p>
           <ResponsePair
             round={turn}
             selectedVote={isVotingTurn ? selectedVote : null}
@@ -149,16 +149,13 @@ export function ArenaPage() {
     <section className={arenaClassName}>
       {!turns.length && !pendingPrompt ? (
         <div className="page-card page-card--helper">
-          <p className="eyebrow">Model Arena</p>
-          <h2>Put two anonymous models head-to-head.</h2>
-          <p>
-            Submit prompts, compare both responses, then vote. Model identities
-            unlock after voting.
-          </p>
-          <div className="arena-note" aria-label="Model disclaimer">
-            <strong>Keep in mind:</strong>
-            <span>Responses may be slow, inaccurate, or hallucinated.</span>
-            <span>Always double-check important facts before relying on them.</span>
+          <p className="eyebrow">{strings.arena.eyebrow}</p>
+          <h2>{strings.arena.introTitle}</h2>
+          <p>{strings.arena.introBody}</p>
+          <div className="arena-note" aria-label={strings.arena.disclaimerLabel}>
+            <strong>{strings.arena.disclaimerTitle}</strong>
+            <span>{strings.arena.disclaimerLine1}</span>
+            <span>{strings.arena.disclaimerLine2}</span>
           </div>
         </div>
       ) : null}
@@ -175,7 +172,7 @@ export function ArenaPage() {
             </article>
             <article className="chat-message chat-message--assistant chat-message--loading">
               <p className="chat-message__role">MakArena</p>
-              <div className="typing-indicator" aria-label="Generating answers">
+              <div className="typing-indicator" aria-label={strings.arena.generatingAnswers}>
                 <span />
                 <span />
                 <span />
@@ -209,7 +206,7 @@ export function ArenaPage() {
       {battle && voteOutcome ? (
         <section className="result-card" aria-live="polite">
           <div className="result-card__top">
-            <p className="result-card__kicker">Vote submitted</p>
+            <p className="result-card__kicker">{strings.arena.voteSubmitted}</p>
             <button
               type="button"
               className="btn btn--ghost result-card__new-chat"
@@ -219,14 +216,14 @@ export function ArenaPage() {
                 aria-hidden="true"
                 className="result-card__new-chat-icon"
               />
-              Start New Chat
+              {strings.arena.startNewChat}
             </button>
           </div>
-          <h3>Thanks, your vote has been counted.</h3>
+          <h3>{strings.arena.thanksVote}</h3>
 
           <div className="result-card__grid">
             <article className="result-chip">
-              <span className="result-chip__label">Model 1</span>
+              <span className="result-chip__label">{strings.arena.voteModel1}</span>
               <strong>
                 <a
                   className="result-chip__model-link"
@@ -240,7 +237,7 @@ export function ArenaPage() {
               </strong>
             </article>
             <article className="result-chip result-chip--winner">
-              <span className="result-chip__label">Winning model</span>
+              <span className="result-chip__label">{strings.arena.winningModel}</span>
               <strong>
                 {voteOutcome.winner === 'tie' || !winnerLabel ? (
                   winnerLabel
@@ -258,7 +255,7 @@ export function ArenaPage() {
               </strong>
             </article>
             <article className="result-chip">
-              <span className="result-chip__label">Model 2</span>
+              <span className="result-chip__label">{strings.arena.voteModel2}</span>
               <strong>
                 <a
                   className="result-chip__model-link"

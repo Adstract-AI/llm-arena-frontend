@@ -27,6 +27,7 @@ import type {
   ExperimentalSetup,
   ExperimentalVoteOutcome,
 } from '../types'
+import { useI18n } from '../../../shared/i18n/I18nContext'
 
 const DEFAULT_PARAMETER_DISTRIBUTION: ExperimentalDistributionType = 'uniform'
 
@@ -44,34 +45,6 @@ const DEFAULT_SETUP: ExperimentalSetup = {
   parameters: DEFAULT_PARAMETER_SETTINGS,
 }
 
-const PARAMETER_LABELS: Record<ExperimentalParameterKey, string> = {
-  temperature: 'temperature',
-  topP: 'top-p',
-  topK: 'top-k',
-  frequencyPenalty: 'frequency penalty',
-  presencePenalty: 'presence penalty',
-}
-
-function formatSetupSummary(setup: ExperimentalSetup): string {
-  const baseSummary = setup.modelMode === 'same'
-    ? setup.parameterMode === 'same'
-      ? 'Same model · same parameters'
-      : 'Same model · different parameters'
-    : setup.parameterMode === 'same'
-    ? 'Different models · same parameters'
-    : 'Different models · different parameters'
-
-  const enabledParameters = Object.entries(setup.parameters)
-    .filter(([, parameter]) => parameter.enabled)
-    .map(([key]) => PARAMETER_LABELS[key as ExperimentalParameterKey])
-
-  if (enabledParameters.length === 0) {
-    return `${baseSummary} · none exposed`
-  }
-
-  return `${baseSummary} · ${enabledParameters.join(', ')}`
-}
-
 function cloneDefaultParameterSettings(): ExperimentalParameterSettings {
   return {
     temperature: { ...DEFAULT_PARAMETER_SETTINGS.temperature },
@@ -86,9 +59,9 @@ function hasEnabledParameter(setup: ExperimentalSetup): boolean {
   return Object.values(setup.parameters).some((parameter) => parameter.enabled)
 }
 
-function formatParameterValue(value: number | null): string {
+function formatParameterValue(value: number | null, notUsedLabel: string): string {
   if (value === null) {
-    return 'Not used'
+    return notUsedLabel
   }
 
   return Number.isInteger(value) ? `${value}` : value.toFixed(2)
@@ -117,6 +90,7 @@ function createResponseState(originalResponse: string): EditableResponseState {
 
 export function ExperimentalArenaPage() {
   const { isAuthenticated, isInitializing } = useAuth()
+  const { strings } = useI18n()
   const [battle, setBattle] = useState<ArenaBattle | null>(null)
   const [voteOutcome, setVoteOutcome] = useState<ExperimentalVoteOutcome | null>(null)
   const [selectedVote, setSelectedVote] = useState<VoteChoice | null>(null)
@@ -138,6 +112,38 @@ export function ExperimentalArenaPage() {
   const turns = battle?.turns ?? []
   const latestTurn = turns.length > 0 ? turns[turns.length - 1] : null
 
+  function getParameterLabel(key: ExperimentalParameterKey): string {
+    const labels: Record<ExperimentalParameterKey, string> = {
+      temperature: strings.experimental.temperature.toLowerCase(),
+      topP: strings.experimental.topP.toLowerCase(),
+      topK: strings.experimental.topK.toLowerCase(),
+      frequencyPenalty: strings.experimental.frequencyPenalty.toLowerCase(),
+      presencePenalty: strings.experimental.presencePenalty.toLowerCase(),
+    }
+
+    return labels[key]
+  }
+
+  function formatSetupSummary(setup: ExperimentalSetup): string {
+    const baseSummary = setup.modelMode === 'same'
+      ? setup.parameterMode === 'same'
+        ? strings.experimental.sameModelSameParameters
+        : strings.experimental.sameModelDifferentParameters
+      : setup.parameterMode === 'same'
+        ? strings.experimental.differentModelsSameParameters
+        : strings.experimental.differentModelsDifferentParameters
+
+    const enabledParameters = Object.entries(setup.parameters)
+      .filter(([, parameter]) => parameter.enabled)
+      .map(([key]) => getParameterLabel(key as ExperimentalParameterKey))
+
+    if (enabledParameters.length === 0) {
+      return `${baseSummary} · ${strings.experimental.noneExposed}`
+    }
+
+    return `${baseSummary} · ${enabledParameters.join(', ')}`
+  }
+
   const winnerLabel = useMemo(() => {
     if (!voteOutcome) {
       return null
@@ -151,8 +157,8 @@ export function ExperimentalArenaPage() {
       return voteOutcome.answer2ModelName
     }
 
-    return 'Tie'
-  }, [voteOutcome])
+    return strings.arena.tie
+  }, [strings.arena.tie, voteOutcome])
 
   async function syncBattleState(nextBattle: ArenaBattle) {
     try {
@@ -182,7 +188,7 @@ export function ExperimentalArenaPage() {
       setError(
         submissionError instanceof Error
           ? submissionError.message
-          : 'Could not process your prompt.',
+          : strings.arena.couldNotProcessPrompt,
       )
     } finally {
       setIsGenerating(false)
@@ -205,9 +211,7 @@ export function ExperimentalArenaPage() {
       setBattle(result.battle)
     } catch (voteError) {
       setError(
-        voteError instanceof Error
-          ? voteError.message
-          : 'Could not submit your vote.',
+        voteError instanceof Error ? voteError.message : strings.arena.couldNotSubmitVote,
       )
     } finally {
       setIsVoting(false)
@@ -216,7 +220,7 @@ export function ExperimentalArenaPage() {
 
   function handleConfirmSetup() {
     if (!hasEnabledParameter(draftSetup)) {
-      setSetupValidationMessage('Enable at least one parameter for this setup.')
+      setSetupValidationMessage(strings.experimental.setupValidation)
       return
     }
 
@@ -339,7 +343,7 @@ export function ExperimentalArenaPage() {
       setError(
         submissionError instanceof Error
           ? submissionError.message
-          : 'Could not save your edited response.',
+          : strings.experimental.couldNotSaveEdit,
       )
     } finally {
       setSavingEditKey(null)
@@ -372,7 +376,7 @@ export function ExperimentalArenaPage() {
         </article>
 
         <article className="chat-message chat-message--assistant chat-message--duel">
-          <p className="chat-message__role">Responses</p>
+          <p className="chat-message__role">{strings.arena.responses}</p>
           <EditableResponsePair
             selectedVote={isVotingTurn ? selectedVote : null}
             onSelectVote={isVotingTurn ? setSelectedVote : undefined}
@@ -405,31 +409,31 @@ export function ExperimentalArenaPage() {
     ? [
         {
           key: 'temperature',
-          label: 'Temperature',
+          label: strings.experimental.temperature,
           answer1Value: voteOutcome.experiment.parameters.temperature.answer1Value,
           answer2Value: voteOutcome.experiment.parameters.temperature.answer2Value,
         },
         {
           key: 'topP',
-          label: 'Top-p',
+          label: strings.experimental.topP,
           answer1Value: voteOutcome.experiment.parameters.topP.answer1Value,
           answer2Value: voteOutcome.experiment.parameters.topP.answer2Value,
         },
         {
           key: 'topK',
-          label: 'Top-k',
+          label: strings.experimental.topK,
           answer1Value: voteOutcome.experiment.parameters.topK.answer1Value,
           answer2Value: voteOutcome.experiment.parameters.topK.answer2Value,
         },
         {
           key: 'frequencyPenalty',
-          label: 'Frequency penalty',
+          label: strings.experimental.frequencyPenalty,
           answer1Value: voteOutcome.experiment.parameters.frequencyPenalty.answer1Value,
           answer2Value: voteOutcome.experiment.parameters.frequencyPenalty.answer2Value,
         },
         {
           key: 'presencePenalty',
-          label: 'Presence penalty',
+          label: strings.experimental.presencePenalty,
           answer1Value: voteOutcome.experiment.parameters.presencePenalty.answer1Value,
           answer2Value: voteOutcome.experiment.parameters.presencePenalty.answer2Value,
         },
@@ -440,8 +444,8 @@ export function ExperimentalArenaPage() {
     <section className={experimentalClassName}>
       {!isInitializing && !isAuthenticated ? (
         <AuthGateCard
-          title="Sign in to use Experimental Arena"
-          description="Sign in to explore all the features in the Experimental Arena."
+          title={strings.auth.experimentalGateTitle}
+          description={strings.auth.experimentalGateDescription}
           returnPath="/experimental"
         />
       ) : null}
@@ -451,26 +455,19 @@ export function ExperimentalArenaPage() {
       {!turns.length && !pendingPrompt ? (
         <div className="experimental-arena__setup-shell">
           <div className="page-card page-card--helper experimental-arena__intro-card">
-            <p className="eyebrow">Experimental Arena</p>
-            <h2>Compare with one extra layer of control.</h2>
-            <p>
-              Keep the same Arena rhythm, but define the comparison setup first
-              so you can test same-model runs or parameter-matched battles.
-              After each prompt, you can also submit an improvement to refine the results.
-            </p>
-            <div className="arena-note" aria-label="Experimental arena disclaimer">
-              <strong>Experimental mode:</strong>
-              <span>
-                Parameter values stay hidden until after voting to preserve the
-                blind-evaluation flow.
-              </span>
+            <p className="eyebrow">{strings.experimental.eyebrow}</p>
+            <h2>{strings.experimental.introTitle}</h2>
+            <p>{strings.experimental.introBody}</p>
+            <div className="arena-note" aria-label={strings.experimental.disclaimerLabel}>
+              <strong>{strings.experimental.disclaimerTitle}</strong>
+              <span>{strings.experimental.disclaimerLine}</span>
             </div>
           </div>
 
           {confirmedSetup && !isEditingSetup ? (
             <section className="experimental-summary experimental-summary--editable">
               <div>
-                <p className="experimental-summary__label">Configuration set</p>
+                <p className="experimental-summary__label">{strings.experimental.configurationSet}</p>
                 <p className="experimental-summary__value">
                   {formatSetupSummary(confirmedSetup)}
                 </p>
@@ -480,7 +477,7 @@ export function ExperimentalArenaPage() {
                 className="btn btn--ghost experimental-summary__action"
                 onClick={() => setIsEditingSetup(true)}
               >
-                Change
+                {strings.experimental.change}
               </button>
             </section>
           ) : (
@@ -533,7 +530,7 @@ export function ExperimentalArenaPage() {
 
       <section className="chat-space" aria-live="polite">
         {confirmedSetup && (turns.length > 0 || pendingPrompt) && !voteOutcome ? (
-          <div className="experimental-context-chip" aria-label="Current experiment setup">
+          <div className="experimental-context-chip" aria-label={strings.experimental.currentSetup}>
             <TuneRoundedIcon
               aria-hidden="true"
               className="experimental-context-chip__icon"
@@ -551,7 +548,7 @@ export function ExperimentalArenaPage() {
             </article>
             <article className="chat-message chat-message--assistant chat-message--loading">
               <p className="chat-message__role">MakArena</p>
-              <div className="typing-indicator" aria-label="Generating answers">
+              <div className="typing-indicator" aria-label={strings.arena.generatingAnswers}>
                 <span />
                 <span />
                 <span />
@@ -590,7 +587,7 @@ export function ExperimentalArenaPage() {
       {battle && voteOutcome ? (
         <section className="result-card result-card--experimental" aria-live="polite">
           <div className="result-card__top">
-            <p className="result-card__kicker">Vote submitted</p>
+            <p className="result-card__kicker">{strings.arena.voteSubmitted}</p>
             <button
               type="button"
               className="btn btn--ghost result-card__new-chat"
@@ -600,10 +597,10 @@ export function ExperimentalArenaPage() {
                 aria-hidden="true"
                 className="result-card__new-chat-icon"
               />
-              Start New Experiment
+              {strings.experimental.startNewExperiment}
             </button>
           </div>
-          <h3>Thanks, your vote has been counted.</h3>
+          <h3>{strings.arena.thanksVote}</h3>
 
           <div className="experimental-result__controls">
             <button
@@ -611,7 +608,9 @@ export function ExperimentalArenaPage() {
               className="experimental-parameters__toggle"
               onClick={() => setIsShowingParameters((current) => !current)}
             >
-              {isShowingParameters ? 'Hide parameters' : 'View parameters'}
+              {isShowingParameters
+                ? strings.experimental.hideParameters
+                : strings.experimental.viewParameters}
             </button>
           </div>
 
@@ -621,7 +620,7 @@ export function ExperimentalArenaPage() {
                 isShowingParameters ? 'result-chip result-chip--expanded' : 'result-chip'
               }
             >
-              <span className="result-chip__label">Model 1</span>
+              <span className="result-chip__label">{strings.arena.voteModel1}</span>
               <strong>
                 <Link
                   className="result-chip__model-link"
@@ -644,7 +643,7 @@ export function ExperimentalArenaPage() {
                   {experimentalResultRows.map((row) => (
                     <Fragment key={row.key}>
                       <span>{row.label}</span>
-                      <strong>{formatParameterValue(row.answer1Value)}</strong>
+                      <strong>{formatParameterValue(row.answer1Value, strings.experimental.notUsed)}</strong>
                     </Fragment>
                   ))}
                 </div>
@@ -652,7 +651,7 @@ export function ExperimentalArenaPage() {
             </article>
 
             <article className="result-chip result-chip--winner">
-              <span className="result-chip__label">Winning model</span>
+              <span className="result-chip__label">{strings.arena.winningModel}</span>
               <strong>
                 {voteOutcome.winner === 'tie' || !winnerLabel ? (
                   winnerLabel
@@ -673,7 +672,7 @@ export function ExperimentalArenaPage() {
                 isShowingParameters ? 'result-chip result-chip--expanded' : 'result-chip'
               }
             >
-              <span className="result-chip__label">Model 2</span>
+              <span className="result-chip__label">{strings.arena.voteModel2}</span>
               <strong>
                 <Link
                   className="result-chip__model-link"
@@ -696,7 +695,7 @@ export function ExperimentalArenaPage() {
                   {experimentalResultRows.map((row) => (
                     <Fragment key={row.key}>
                       <span>{row.label}</span>
-                      <strong>{formatParameterValue(row.answer2Value)}</strong>
+                      <strong>{formatParameterValue(row.answer2Value, strings.experimental.notUsed)}</strong>
                     </Fragment>
                   ))}
                 </div>

@@ -5,14 +5,7 @@ import LightModeRoundedIcon from '@mui/icons-material/LightModeRounded'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { deleteCurrentUser } from '../../features/auth/api/authApi'
 import { AuthProvider, useAuth } from '../../features/auth/context/AuthContext'
-
-const navItems = [
-  { to: '/arena', label: 'Arena' },
-  { to: '/experimental', label: 'Experimental' },
-  { to: '/chat', label: 'Chat' },
-  { to: '/leaderboard', label: 'Leaderboard' },
-  { to: '/about', label: 'About' },
-]
+import { useI18n } from '../../shared/i18n/I18nContext'
 
 type Theme = 'dark' | 'light'
 
@@ -45,6 +38,14 @@ function AppLayoutInner() {
     loadCurrentUser,
     user,
   } = useAuth()
+  const { language, setLanguage, strings } = useI18n()
+  const navItems = [
+    { to: '/arena', label: strings.nav.arena },
+    { to: '/experimental', label: strings.nav.experimental },
+    { to: '/chat', label: strings.nav.chat },
+    { to: '/leaderboard', label: strings.nav.leaderboard },
+    { to: '/about', label: strings.nav.about },
+  ]
   const logoSrc =
     theme === 'dark' ? '/mak_final_black_transparent.png' : '/mak_final_white_transparent.png'
 
@@ -115,7 +116,7 @@ function AppLayoutInner() {
       navigate('/')
     } catch (error) {
       setDeleteAccountError(
-        error instanceof Error ? error.message : 'Could not delete account.',
+        error instanceof Error ? error.message : strings.deleteDialog.error,
       )
     } finally {
       setIsDeletingAccount(false)
@@ -128,14 +129,14 @@ function AppLayoutInner() {
       <div className="bg-orb bg-orb--two" aria-hidden="true" />
       <header className="topbar">
         <div className="topbar__inner">
-          <Link to="/" className="brand" aria-label="MakArena home">
+          <Link to="/" className="brand" aria-label={strings.topbar.home}>
             <span className="brand__logo-frame">
               <img src={logoSrc} alt="MakArena" className="brand__logo" />
             </span>
           </Link>
 
           <div className="topbar__actions">
-            <nav aria-label="Main navigation" className="topnav">
+            <nav aria-label={strings.topbar.mainNavigation} className="topnav">
               {navItems.map((item) => (
                 <NavLink
                   key={item.to}
@@ -148,6 +149,31 @@ function AppLayoutInner() {
                 </NavLink>
               ))}
             </nav>
+
+            <div className="language-toggle" role="group" aria-label={strings.topbar.languagePicker}>
+              <button
+                type="button"
+                className={
+                  language === 'en'
+                    ? 'language-toggle__option language-toggle__option--active'
+                    : 'language-toggle__option'
+                }
+                onClick={() => setLanguage('en')}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                className={
+                  language === 'mk'
+                    ? 'language-toggle__option language-toggle__option--active'
+                    : 'language-toggle__option'
+                }
+                onClick={() => setLanguage('mk')}
+              >
+                МК
+              </button>
+            </div>
 
             {!isInitializing ? (
               isAuthenticated && user ? (
@@ -162,7 +188,7 @@ function AppLayoutInner() {
                     onClick={() => setIsUserMenuOpen((current) => !current)}
                     aria-expanded={isUserMenuOpen}
                     aria-haspopup="menu"
-                    aria-label="Open user menu"
+                    aria-label={strings.topbar.openUserMenu}
                   >
                     <AccountCircleRoundedIcon
                       aria-hidden="true"
@@ -174,7 +200,7 @@ function AppLayoutInner() {
                     <div className="user-menu__dropdown" role="menu">
                       <div className="user-menu__identity">
                         <strong className="user-menu__name">
-                          {user.username || 'MakArena user'}
+                          {user.username || strings.topbar.userFallback}
                         </strong>
                         <span className="user-menu__email">{user.email}</span>
                       </div>
@@ -187,7 +213,7 @@ function AppLayoutInner() {
                           logout(false)
                         }}
                       >
-                        Logout
+                        {strings.topbar.logout}
                       </button>
                       <button
                         type="button"
@@ -197,7 +223,7 @@ function AppLayoutInner() {
                           setIsDeleteConfirmOpen(true)
                         }}
                       >
-                        Delete account
+                        {strings.topbar.deleteAccount}
                       </button>
                     </div>
                   ) : null}
@@ -208,7 +234,7 @@ function AppLayoutInner() {
                   className="btn btn--ghost topbar__login"
                   onClick={() => openLoginPage()}
                 >
-                  Login
+                  {strings.topbar.login}
                 </button>
               )
             ) : null}
@@ -218,9 +244,15 @@ function AppLayoutInner() {
               onClick={toggleTheme}
               className="theme-toggle"
               aria-label={
-                theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'
+                theme === 'dark'
+                  ? strings.topbar.switchToLightMode
+                  : strings.topbar.switchToDarkMode
               }
-              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={
+                theme === 'dark'
+                  ? strings.topbar.switchToLightMode
+                  : strings.topbar.switchToDarkMode
+              }
             >
               {theme === 'dark' ? (
                 <LightModeRoundedIcon aria-hidden="true" className="theme-toggle__icon" />
@@ -228,7 +260,9 @@ function AppLayoutInner() {
                 <DarkModeRoundedIcon aria-hidden="true" className="theme-toggle__icon" />
               )}
               <span className="sr-only">
-                {theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                {theme === 'dark'
+                  ? strings.topbar.switchToLightMode
+                  : strings.topbar.switchToDarkMode}
               </span>
             </button>
           </div>
@@ -257,11 +291,10 @@ function AppLayoutInner() {
             aria-describedby="delete-account-description"
             onClick={(event) => event.stopPropagation()}
           >
-            <p className="confirm-dialog__eyebrow">Delete account</p>
-            <h2 id="delete-account-title">This action cannot be undone.</h2>
+            <p className="confirm-dialog__eyebrow">{strings.deleteDialog.eyebrow}</p>
+            <h2 id="delete-account-title">{strings.deleteDialog.title}</h2>
             <p id="delete-account-description" className="confirm-dialog__copy">
-              Every sensitive piece of information connected to your account will be
-              deleted. This step is irreversible.
+              {strings.deleteDialog.description}
             </p>
             {deleteAccountError ? (
               <p className="confirm-dialog__error">{deleteAccountError}</p>
@@ -276,7 +309,7 @@ function AppLayoutInner() {
                 }}
                 disabled={isDeletingAccount}
               >
-                Cancel
+                {strings.deleteDialog.cancel}
               </button>
               <button
                 type="button"
@@ -284,7 +317,9 @@ function AppLayoutInner() {
                 onClick={() => void handleDeleteAccount()}
                 disabled={isDeletingAccount}
               >
-                {isDeletingAccount ? 'Deleting...' : 'Delete account'}
+                {isDeletingAccount
+                  ? strings.deleteDialog.deleting
+                  : strings.deleteDialog.confirm}
               </button>
             </div>
           </section>

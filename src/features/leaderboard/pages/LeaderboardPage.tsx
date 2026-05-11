@@ -3,6 +3,7 @@ import SwapVertRoundedIcon from '@mui/icons-material/SwapVertRounded'
 import { Link, useNavigate } from 'react-router-dom'
 import { getLeaderboard } from '../api/leaderboardApi'
 import type { LeaderboardModel } from '../types'
+import { useI18n } from '../../../shared/i18n/I18nContext'
 
 type NumericSortKey =
   | 'eloScore'
@@ -40,120 +41,121 @@ function formatNullableMetric(value: number | null, digits = 2): string {
   return value.toFixed(digits)
 }
 
-const defaultColumns: NumericColumn[] = [
-  {
-    key: 'eloScore',
-    label: 'ELO',
-    sortLabel: 'ELO',
-    render: (model) => <span className="score-badge">{model.eloScore.toFixed(2)}</span>,
-  },
-  {
-    key: 'nonTieWinRate',
-    label: 'Win Rate',
-    sortLabel: 'Win Rate',
-    render: (model) => (
-      <div className="winrate-meter">
-        <span className="winrate-meter__value">
-          {`${((model.nonTieWinRate ?? 0) * 100).toFixed(1)}%`}
-        </span>
-        <span className="winrate-meter__track" aria-hidden="true">
-          <span
-            className="winrate-meter__fill"
-            style={{
-              width: `${Math.max(0, Math.min((model.nonTieWinRate ?? 0) * 100, 100))}%`,
-            }}
-          />
-        </span>
-      </div>
-    ),
-  },
-  {
-    key: 'matches',
-    label: 'Matches',
-    sortLabel: 'Matches',
-    render: (model) => model.matches.toLocaleString(),
-  },
-  {
-    key: 'wins',
-    label: 'Wins',
-    sortLabel: 'Wins',
-    render: (model) => model.wins.toLocaleString(),
-  },
-  {
-    key: 'losses',
-    label: 'Losses',
-    sortLabel: 'Losses',
-    render: (model) => model.losses.toLocaleString(),
-  },
-  {
-    key: 'ties',
-    label: 'Ties',
-    sortLabel: 'Ties',
-    render: (model) => model.ties.toLocaleString(),
-  },
-]
-
-const experimentalColumns: NumericColumn[] = [
-  {
-    key: 'eloScore',
-    label: 'ELO',
-    sortLabel: 'ELO',
-    render: (model) => <span className="score-badge">{model.eloScore.toFixed(2)}</span>,
-  },
-  {
-    key: 'avgWinningTemp',
-    label: 'Avg Temp',
-    sortLabel: 'Avg Temp',
-    tooltip: 'Average winning temperature',
-    render: (model) => formatNullableMetric(model.avgWinningTemp),
-  },
-  {
-    key: 'avgWinningTopP',
-    label: 'Avg Top-p',
-    sortLabel: 'Avg Top-p',
-    tooltip: 'Average winning top-p',
-    render: (model) => formatNullableMetric(model.avgWinningTopP),
-  },
-  {
-    key: 'avgWinningTopK',
-    label: 'Avg Top-k',
-    sortLabel: 'Avg Top-k',
-    tooltip: 'Average winning top-k',
-    render: (model) => formatNullableMetric(model.avgWinningTopK, 0),
-  },
-  {
-    key: 'avgWinningFreqPenalty',
-    label: (
-      <span className="th-sort-btn__label-stack">
-        <span>Avg Freq</span>
-        <span>Penalty</span>
-      </span>
-    ),
-    sortLabel: 'Avg Freq Penalty',
-    tooltip: 'Average winning frequency penalty',
-    render: (model) => formatNullableMetric(model.avgWinningFreqPenalty),
-  },
-  {
-    key: 'avgWinningPresPenalty',
-    label: (
-      <span className="th-sort-btn__label-stack">
-        <span>Avg Pres</span>
-        <span>Penalty</span>
-      </span>
-    ),
-    sortLabel: 'Avg Pres Penalty',
-    tooltip: 'Average winning presence penalty',
-    render: (model) => formatNullableMetric(model.avgWinningPresPenalty),
-  },
-]
-
 export function LeaderboardPage() {
+  const { strings } = useI18n()
   const navigate = useNavigate()
   const [models, setModels] = useState<LeaderboardModel[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [sort, setSort] = useState<SortState>({ key: 'eloScore', direction: 'desc' })
   const [showExperimentalMetrics, setShowExperimentalMetrics] = useState(false)
+
+  const defaultColumns: NumericColumn[] = [
+    {
+      key: 'eloScore',
+      label: strings.leaderboard.elo,
+      sortLabel: strings.leaderboard.elo,
+      render: (model) => <span className="score-badge">{model.eloScore.toFixed(2)}</span>,
+    },
+    {
+      key: 'nonTieWinRate',
+      label: strings.leaderboard.winRate,
+      sortLabel: strings.leaderboard.winRate,
+      render: (model) => (
+        <div className="winrate-meter">
+          <span className="winrate-meter__value">
+            {`${((model.nonTieWinRate ?? 0) * 100).toFixed(1)}%`}
+          </span>
+          <span className="winrate-meter__track" aria-hidden="true">
+            <span
+              className="winrate-meter__fill"
+              style={{
+                width: `${Math.max(0, Math.min((model.nonTieWinRate ?? 0) * 100, 100))}%`,
+              }}
+            />
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: 'matches',
+      label: strings.leaderboard.matches,
+      sortLabel: strings.leaderboard.matches,
+      render: (model) => model.matches.toLocaleString(),
+    },
+    {
+      key: 'wins',
+      label: strings.leaderboard.wins,
+      sortLabel: strings.leaderboard.wins,
+      render: (model) => model.wins.toLocaleString(),
+    },
+    {
+      key: 'losses',
+      label: strings.leaderboard.losses,
+      sortLabel: strings.leaderboard.losses,
+      render: (model) => model.losses.toLocaleString(),
+    },
+    {
+      key: 'ties',
+      label: strings.leaderboard.ties,
+      sortLabel: strings.leaderboard.ties,
+      render: (model) => model.ties.toLocaleString(),
+    },
+  ]
+
+  const experimentalColumns: NumericColumn[] = [
+    {
+      key: 'eloScore',
+      label: strings.leaderboard.elo,
+      sortLabel: strings.leaderboard.elo,
+      render: (model) => <span className="score-badge">{model.eloScore.toFixed(2)}</span>,
+    },
+    {
+      key: 'avgWinningTemp',
+      label: strings.leaderboard.avgTemp,
+      sortLabel: strings.leaderboard.avgTemp,
+      tooltip: strings.leaderboard.avgWinningTemperature,
+      render: (model) => formatNullableMetric(model.avgWinningTemp),
+    },
+    {
+      key: 'avgWinningTopP',
+      label: strings.leaderboard.avgTopP,
+      sortLabel: strings.leaderboard.avgTopP,
+      tooltip: strings.leaderboard.avgWinningTopP,
+      render: (model) => formatNullableMetric(model.avgWinningTopP),
+    },
+    {
+      key: 'avgWinningTopK',
+      label: strings.leaderboard.avgTopK,
+      sortLabel: strings.leaderboard.avgTopK,
+      tooltip: strings.leaderboard.avgWinningTopK,
+      render: (model) => formatNullableMetric(model.avgWinningTopK, 0),
+    },
+    {
+      key: 'avgWinningFreqPenalty',
+      label: (
+        <span className="th-sort-btn__label-stack">
+          <span>{strings.leaderboard.avgFreqPenalty.split(' ')[0]}</span>
+          <span>{strings.leaderboard.avgFreqPenalty.split(' ').slice(1).join(' ')}</span>
+        </span>
+      ),
+      sortLabel: strings.leaderboard.avgFreqPenalty,
+      tooltip: strings.leaderboard.avgWinningFreqPenalty,
+      render: (model) => formatNullableMetric(model.avgWinningFreqPenalty),
+    },
+    {
+      key: 'avgWinningPresPenalty',
+      label: (
+        <span className="th-sort-btn__label-stack">
+          <span>{strings.leaderboard.avgPresPenalty.split(' ')[0]}</span>
+          <span>{strings.leaderboard.avgPresPenalty.split(' ').slice(1).join(' ')}</span>
+        </span>
+      ),
+      sortLabel: strings.leaderboard.avgPresPenalty,
+      tooltip: strings.leaderboard.avgWinningPresPenalty,
+      render: (model) => formatNullableMetric(model.avgWinningPresPenalty),
+    },
+  ]
 
   const numericColumns = showExperimentalMetrics ? experimentalColumns : defaultColumns
 
@@ -206,9 +208,7 @@ export function LeaderboardPage() {
         if (isMounted) {
           setModels([])
           setError(
-            error instanceof Error
-              ? error.message
-              : 'Could not load leaderboard right now.',
+            error instanceof Error ? error.message : strings.leaderboard.couldNotLoad,
           )
         }
       } finally {
@@ -223,21 +223,21 @@ export function LeaderboardPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [strings.leaderboard.couldNotLoad])
 
   return (
     <section className="leaderboard leaderboard--wide">
       <div className="leaderboard-shell">
         <div className="page-card page-card--helper">
-          <p className="eyebrow">Leaderboard</p>
-          <h2>Model ranking by community votes.</h2>
+          <p className="eyebrow">{strings.leaderboard.eyebrow}</p>
+          <h2>{strings.leaderboard.title}</h2>
         </div>
 
         <div className="leaderboard-card">
         {isLoading ? (
-          <div className="leaderboard-loading">
-            <div className="leaderboard-spinner"></div>
-            <p className="leaderboard-note">Loading leaderboard...</p>
+            <div className="leaderboard-loading">
+              <div className="leaderboard-spinner"></div>
+            <p className="leaderboard-note">{strings.leaderboard.loading}</p>
           </div>
         ) : null}
 
@@ -256,20 +256,20 @@ export function LeaderboardPage() {
               onClick={() => setShowExperimentalMetrics((previous) => !previous)}
               aria-label={
                 showExperimentalMetrics
-                  ? 'Show standard leaderboard metrics'
-                  : 'Show experimental leaderboard metrics'
+                  ? strings.leaderboard.showStandardMetrics
+                  : strings.leaderboard.showExperimentalMetrics
               }
               title={
                 showExperimentalMetrics
-                  ? 'Show standard leaderboard metrics'
-                  : 'Show experimental leaderboard metrics'
+                  ? strings.leaderboard.showStandardMetrics
+                  : strings.leaderboard.showExperimentalMetrics
               }
             >
               <SwapVertRoundedIcon fontSize="inherit" />
             </button>
           </div>
           <div className="leaderboard-table-wrap">
-            <table className="leaderboard-table" aria-label="Model leaderboard">
+            <table className="leaderboard-table" aria-label={strings.leaderboard.tableAria}>
               <colgroup>
                 <col className="rank-col" />
                 <col className="model-col" />
@@ -282,8 +282,8 @@ export function LeaderboardPage() {
               </colgroup>
               <thead>
                 <tr>
-                  <th className="rank-col">Rank</th>
-                  <th className="model-col">Model</th>
+                  <th className="rank-col">{strings.leaderboard.rank}</th>
+                  <th className="model-col">{strings.leaderboard.model}</th>
                   {numericColumns.map((column) => {
                     const active = sort.key === column.key
                     const directionMarker = active ? (sort.direction === 'desc' ? '↓' : '↑') : ''
@@ -293,7 +293,7 @@ export function LeaderboardPage() {
                           type="button"
                           className={active ? 'th-sort-btn th-sort-btn--active' : 'th-sort-btn'}
                           onClick={() => toggleNumericSort(column.key)}
-                          aria-label={`Sort by ${column.sortLabel}`}
+                          aria-label={strings.leaderboard.sortBy(column.sortLabel)}
                         >
                           <span className="th-sort-btn__label">
                             {column.label}
@@ -365,7 +365,7 @@ export function LeaderboardPage() {
           </div>
           </>
         ) : !isLoading && !error && models.length === 0 ? (
-          <p className="leaderboard-note">No models in leaderboard yet.</p>
+          <p className="leaderboard-note">{strings.leaderboard.noModels}</p>
         ) : null}
         </div>
       </div>

@@ -4,6 +4,7 @@ import HighlightOffRoundedIcon from '@mui/icons-material/HighlightOffRounded'
 import WestRoundedIcon from '@mui/icons-material/WestRounded'
 import type { SvgIconComponent } from '@mui/icons-material'
 import type { VoteChoice } from '../types'
+import { useI18n } from '../../../shared/i18n/I18nContext'
 
 interface VotePanelProps {
   selectedVote: VoteChoice | null
@@ -12,55 +13,56 @@ interface VotePanelProps {
   disabled: boolean
 }
 
-const options: Array<{
-  value: VoteChoice
-  label: string
-  helper: string
-  icon: SvgIconComponent
-}> = [
-  {
-    value: 'modelA',
-    label: 'Model 1',
-    helper: 'First model is better',
-    icon: WestRoundedIcon,
-  },
-  {
-    value: 'bothGood',
-    label: 'Both are good',
-    helper: 'Both were strong',
-    icon: DoneAllRoundedIcon,
-  },
-  {
-    value: 'bothBad',
-    label: 'Neither is good',
-    helper: 'Both missed the mark',
-    icon: HighlightOffRoundedIcon,
-  },
-  {
-    value: 'modelB',
-    label: 'Model 2',
-    helper: 'Second model is better',
-    icon: EastRoundedIcon,
-  },
-]
-
 export function VotePanel({
   selectedVote,
   onSelectVote,
   onSubmitVote,
   disabled,
 }: VotePanelProps) {
+  const { strings } = useI18n()
+  const options: Array<{
+    value: VoteChoice
+    label: string
+    helper: string
+    icon: SvgIconComponent
+  }> = [
+    {
+      value: 'modelA',
+      label: strings.arena.voteModel1,
+      helper: strings.arena.voteModel1Helper,
+      icon: WestRoundedIcon,
+    },
+    {
+      value: 'bothGood',
+      label: strings.arena.voteBothGood,
+      helper: strings.arena.voteBothGoodHelper,
+      icon: DoneAllRoundedIcon,
+    },
+    {
+      value: 'bothBad',
+      label: strings.arena.voteBothBad,
+      helper: strings.arena.voteBothBadHelper,
+      icon: HighlightOffRoundedIcon,
+    },
+    {
+      value: 'modelB',
+      label: strings.arena.voteModel2,
+      helper: strings.arena.voteModel2Helper,
+      icon: EastRoundedIcon,
+    },
+  ]
+
   return (
-    <section className="vote-panel" aria-label="Vote for best response">
+    <section className="vote-panel" aria-label={strings.arena.votePanelLabel}>
       <div className="vote-panel__header">
-        <h3>Choose the better response</h3>
+        <h3>{strings.arena.voteTitle}</h3>
         <button
           type="button"
           className="btn btn--primary vote-panel__submit"
           onClick={() => void onSubmitVote()}
           disabled={disabled || !selectedVote}
         >
-          Submit Vote
+          {strings.arena.submitVote}
         </button>
       </div>
 

@@ -1,6 +1,7 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { ArenaTurn, VoteChoice } from '../types'
+import { useI18n } from '../../../shared/i18n/I18nContext'
 
 interface ResponsePairProps {
   round: ArenaTurn
@@ -37,6 +38,7 @@ export function ResponsePair({
   reveal,
   revealedModels,
 }: ResponsePairProps) {
+  const { strings } = useI18n()
   const canSelect = Boolean(onSelectVote) && !disabled
   const cardAClassName =
     selectedVote === 'modelA'
@@ -60,7 +62,7 @@ export function ResponsePair({
     <section className="duel-grid" aria-live="polite">
       <div className="response-column">
         <div className="response-column__header">
-          <p className="response-column__title">Model 1</p>
+          <p className="response-column__title">{strings.arena.voteModel1}</p>
           {reveal && revealedModels ? (
             <p className="response-column__meta">{revealedModels.answer1Model}</p>
           ) : null}
@@ -72,7 +74,7 @@ export function ResponsePair({
           onClick={canSelect ? () => handleCardSelect('modelA') : undefined}
           aria-disabled={!canSelect}
           tabIndex={canSelect ? 0 : -1}
-          aria-label="Select model 1"
+          aria-label={strings.arena.selectModel1}
         >
           <div className="response-card__content">{renderMarkdown(round.answerA)}</div>
         </button>
@@ -80,7 +82,7 @@ export function ResponsePair({
 
       <div className="response-column">
         <div className="response-column__header">
-          <p className="response-column__title">Model 2</p>
+          <p className="response-column__title">{strings.arena.voteModel2}</p>
           {reveal && revealedModels ? (
             <p className="response-column__meta">{revealedModels.answer2Model}</p>
           ) : null}
@@ -92,7 +94,7 @@ export function ResponsePair({
           onClick={canSelect ? () => handleCardSelect('modelB') : undefined}
           aria-disabled={!canSelect}
           tabIndex={canSelect ? 0 : -1}
-          aria-label="Select model 2"
+          aria-label={strings.arena.selectModel2}
         >
           <div className="response-card__content">{renderMarkdown(round.answerB)}</div>
         </button>

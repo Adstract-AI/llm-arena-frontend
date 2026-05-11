@@ -1,65 +1,45 @@
 import { Link } from 'react-router-dom'
+import { useI18n } from '../../../shared/i18n/I18nContext'
 
 export function PrivacyPolicyPage() {
+  const { strings } = useI18n()
+
   return (
     <section className="legal-page">
       <header className="legal-page__hero">
-        <p className="eyebrow">Privacy Policy</p>
-        <h1 className="legal-page__title">How MakArena handles your information.</h1>
-        <p className="legal-page__lead">
-          This page explains what information may be collected when you use MakArena,
-          why it is used, and the care taken around your account and interaction data.
-        </p>
+        <p className="eyebrow">{strings.legal.privacyPolicy}</p>
+        <h1 className="legal-page__title">{strings.legal.privacyTitle}</h1>
+        <p className="legal-page__lead">{strings.legal.privacyLead}</p>
       </header>
 
       <section className="legal-page__section">
-        <h2>Information we may store</h2>
-        <p>
-          MakArena may store account details such as your username and email address,
-          along with usage data needed to operate the platform. This can include chat
-          sessions, arena prompts, model responses, votes, leaderboard activity, and
-          authentication-related records.
-        </p>
+        <h2>{strings.legal.privacyInfoTitle}</h2>
+        <p>{strings.legal.privacyInfoBody}</p>
       </section>
 
       <section className="legal-page__section">
-        <h2>Why this information is used</h2>
-        <p>
-          The information is used to authenticate users, support arena and chat
-          functionality, improve model evaluation workflows, maintain platform
-          reliability, and generate aggregate rankings and comparison insights.
-        </p>
+        <h2>{strings.legal.privacyWhyTitle}</h2>
+        <p>{strings.legal.privacyWhyBody}</p>
       </section>
 
       <section className="legal-page__section">
-        <h2>Model output and user responsibility</h2>
-        <p>
-          Model responses may be inaccurate, incomplete, biased, or hallucinated. You
-          should verify important facts before relying on them, especially in cases
-          involving health, law, finance, safety, or other high-impact decisions.
-        </p>
+        <h2>{strings.legal.privacyResponsibilityTitle}</h2>
+        <p>{strings.legal.privacyResponsibilityBody}</p>
       </section>
 
       <section className="legal-page__section">
-        <h2>Account deletion</h2>
-        <p>
-          You can request account deletion from the profile menu. Deleting your account
-          is intended to remove sensitive account information connected to you, and this
-          action is irreversible.
-        </p>
+        <h2>{strings.legal.privacyDeletionTitle}</h2>
+        <p>{strings.legal.privacyDeletionBody}</p>
       </section>
 
       <section className="legal-page__section">
-        <h2>Policy updates</h2>
-        <p>
-          This policy may be updated as MakArena evolves. Continued use of the platform
-          after changes means the updated policy applies going forward.
-        </p>
+        <h2>{strings.legal.privacyUpdatesTitle}</h2>
+        <p>{strings.legal.privacyUpdatesBody}</p>
       </section>
 
       <footer className="legal-page__footer">
         <Link to="/terms" className="legal-page__link">
-          Read Terms of Service
+          {strings.legal.readTerms}
         </Link>
       </footer>
     </section>

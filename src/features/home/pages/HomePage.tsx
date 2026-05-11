@@ -1,66 +1,56 @@
 import { Link } from 'react-router-dom'
+import { useI18n } from '../../../shared/i18n/I18nContext'
 
 export function HomePage() {
+  const { strings } = useI18n()
+
   return (
     <section className="home">
-      <p className="eyebrow">Compare. Vote. Contribute.</p>
-      <h2 className="hero-title">Decide which AI model performed better.</h2>
-      <p className="hero-copy">
-        Compare models in Arena, test controlled runs in Experimental Arena, or jump
-        into direct Chat mode. Evaluate anonymous conversations, vote on the full exchange,
-        and see transparent results after each decision.
-      </p>
+      <p className="eyebrow">{strings.home.eyebrow}</p>
+      <h2 className="hero-title">{strings.home.title}</h2>
+      <p className="hero-copy">{strings.home.description}</p>
 
       <div className="hero-actions">
         <Link to="/arena" className="btn btn--primary">
-          Start Comparing
+          {strings.home.startComparing}
         </Link>
         <Link to="/experimental" className="btn btn--ghost">
-          Try Experimental
+          {strings.home.tryExperimental}
         </Link>
         <Link to="/chat" className="btn btn--ghost">
-          Open Chat
+          {strings.home.openChat}
         </Link>
         <Link to="/about" className="btn btn--ghost">
-          How It Works
+          {strings.home.howItWorks}
         </Link>
       </div>
 
-      <div className="home-grid" aria-label="How it works">
+      <div className="home-grid" aria-label={strings.home.howItWorksLabel}>
         <article className="info-card">
-          <p className="info-card__kicker">Step 1</p>
-          <h3>Anonymous Arena Chat</h3>
-          <p>
-            Start one arena conversation and compare two side-by-side model threads
-            with hidden identities, so decisions stay focused on quality.
-          </p>
+          <p className="info-card__kicker">{strings.home.step1}</p>
+          <h3>{strings.home.anonymousArenaTitle}</h3>
+          <p>{strings.home.anonymousArenaBody}</p>
           <div className="info-card__inline-links">
             <Link to="/arena" className="info-card__inline-link">
-              Go To Arena
+              {strings.home.goToArena}
             </Link>
           </div>
         </article>
         <article className="info-card">
-          <p className="info-card__kicker">Step 2</p>
-          <h3>Quick Voting + Reveal</h3>
-          <p>
-            Continue for multiple turns if needed, then vote Model 1, Model 2, both,
-            or neither. After voting, MakArena reveals which models were behind the conversation.
-          </p>
+          <p className="info-card__kicker">{strings.home.step2}</p>
+          <h3>{strings.home.quickVotingTitle}</h3>
+          <p>{strings.home.quickVotingBody}</p>
         </article>
         <article className="info-card">
-          <p className="info-card__kicker">Also Available</p>
-          <h3>Chat + Experimental</h3>
-          <p>
-            Need a fast answer? Use Chat mode for one-on-one conversations. Need more control?
-            Experimental Arena lets you compare with parameter setup before the round starts.
-          </p>
+          <p className="info-card__kicker">{strings.home.alsoAvailable}</p>
+          <h3>{strings.home.chatExperimentalTitle}</h3>
+          <p>{strings.home.chatExperimentalBody}</p>
           <div className="info-card__inline-links">
             <Link to="/chat" className="info-card__inline-link">
-              Open Chat
+              {strings.home.openChat}
             </Link>
             <Link to="/experimental" className="info-card__inline-link">
-              Explore Experimental
+              {strings.home.exploreExperimental}
             </Link>
           </div>
         </article>
