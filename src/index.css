@@ -2843,6 +2843,10 @@ input {
   animation-delay: 0.24s;
 }
 
+.typing-indicator--inline {
+  margin: 10px 0 0;
+}
+
 @keyframes typingPulse {
   0%,
   100% {
