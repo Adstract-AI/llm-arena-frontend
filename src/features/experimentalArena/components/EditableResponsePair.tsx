@@ -3,6 +3,7 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { VoteChoice } from '../../arena/types'
+import type { ResponseSlotStatus } from '../../arena/components/ResponsePair'
 
 type EditableResponseSide = 'A' | 'B'
 
@@ -26,6 +27,10 @@ interface EditableResponsePairProps {
   canEditLatest: boolean
   answerAIsSubmitting?: boolean
   answerBIsSubmitting?: boolean
+  answerAStatus?: ResponseSlotStatus
+  answerBStatus?: ResponseSlotStatus
+  answerAError?: string | null
+  answerBError?: string | null
   answerAState: EditableResponseState
   answerBState: EditableResponseState
   onStartEdit: (side: EditableResponseSide) => void
@@ -58,6 +63,10 @@ export function EditableResponsePair({
   canEditLatest,
   answerAIsSubmitting = false,
   answerBIsSubmitting = false,
+  answerAStatus = 'completed',
+  answerBStatus = 'completed',
+  answerAError = null,
+  answerBError = null,
   answerAState,
   answerBState,
   onStartEdit,
@@ -83,14 +92,20 @@ export function EditableResponsePair({
     modelName: string | undefined,
     state: EditableResponseState,
     isSubmittingEdit: boolean,
+    status: ResponseSlotStatus,
+    error: string | null,
   ) {
     const isSelected = selectedVote === vote
+    const isStreaming = status === 'streaming'
+    const isFailed = status === 'failed'
     const className = [
       'response-card',
       isSelected ? 'response-card--selected' : null,
       canSelect ? null : 'response-card--static',
       state.isEditing ? 'response-card--editing' : null,
       state.editedResponse ? 'response-card--edited' : null,
+      isStreaming ? 'response-card--streaming' : null,
+      isFailed ? 'response-card--failed' : null,
     ]
       .filter(Boolean)
       .join(' ')
@@ -195,7 +210,22 @@ export function EditableResponsePair({
                 </div>
               </div>
             ) : (
-              renderMarkdown(displayedResponse)
+              <>
+                {displayedResponse ? renderMarkdown(displayedResponse) : null}
+                {isStreaming ? (
+                  <div
+                    className="response-card__stream-status"
+                    aria-label={`${label} is generating`}
+                  >
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                ) : null}
+                {isFailed && error ? (
+                  <p className="response-card__error">{error}</p>
+                ) : null}
+              </>
             )}
           </div>
         </div>
@@ -212,6 +242,8 @@ export function EditableResponsePair({
         reveal ? revealedModels?.answer1Model : undefined,
         answerAState,
         answerAIsSubmitting,
+        answerAStatus,
+        answerAError,
       )}
       {renderCard(
         'B',
@@ -220,6 +252,8 @@ export function EditableResponsePair({
         reveal ? revealedModels?.answer2Model : undefined,
         answerBState,
         answerBIsSubmitting,
+        answerBStatus,
+        answerBError,
       )}
     </section>
   )

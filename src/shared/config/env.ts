@@ -1,7 +1,9 @@
 declare global {
   interface Window {
     __APP_CONFIG__?: {
+      ENABLE_STREAMING?: string
       VITE_API_BASE_URL?: string
+      VITE_ENABLE_STREAMING?: string
       VITE_GITHUB_CLIENT_ID?: string
       VITE_GOOGLE_CLIENT_ID?: string
       VITE_GITHUB_OAUTH_AUTHORIZE_URL?: string
@@ -15,6 +17,14 @@ declare global {
 const apiBaseUrlRaw =
   window.__APP_CONFIG__?.VITE_API_BASE_URL?.trim() ?? import.meta.env.VITE_API_BASE_URL?.trim()
 const apiBaseUrl = apiBaseUrlRaw ? apiBaseUrlRaw.replace(/\/+$/, '') : ''
+const enableStreamingRaw =
+  window.__APP_CONFIG__?.ENABLE_STREAMING?.trim() ??
+  window.__APP_CONFIG__?.VITE_ENABLE_STREAMING?.trim() ??
+  import.meta.env.VITE_ENABLE_STREAMING?.trim()
+const enableStreaming =
+  enableStreamingRaw === undefined
+    ? true
+    : !['false', '0', 'no', 'off'].includes(enableStreamingRaw.toLowerCase())
 const githubClientId =
   window.__APP_CONFIG__?.VITE_GITHUB_CLIENT_ID?.trim() ??
   import.meta.env.VITE_GITHUB_CLIENT_ID?.trim() ??
@@ -42,6 +52,7 @@ const googleOAuthRedirectUri =
 
 export const env = {
   apiBaseUrl,
+  enableStreaming,
   githubClientId,
   googleClientId,
   githubOAuthAuthorizeUrl,

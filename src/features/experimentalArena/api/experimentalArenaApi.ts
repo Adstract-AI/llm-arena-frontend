@@ -1,4 +1,6 @@
 import { httpGet, httpPatch, httpPost } from '../../../shared/network/httpClient'
+import { streamSseRequest } from '../../../shared/network/streamSseRequest'
+import type { ArenaStreamHandlers } from '../../arena/api/arenaApi'
 import type { ArenaBattle, ArenaTurn, VoteChoice } from '../../arena/types'
 import type {
   ExperimentalSetup,
@@ -7,7 +9,7 @@ import type {
 
 type ApiSlot = 'A' | 'B'
 
-interface BattleStateResponse {
+export interface BattleStateResponse {
   id: string
   status: string
   can_vote: boolean
@@ -154,7 +156,7 @@ function toArenaTurn(
   }
 }
 
-function toArenaBattle(response: BattleStateResponse): ArenaBattle {
+export function toArenaBattle(response: BattleStateResponse): ArenaBattle {
   return {
     battleId: response.id,
     status: response.status,
@@ -256,6 +258,22 @@ export async function startExperimentalBattle(
   return toArenaBattle(response)
 }
 
+export function startExperimentalBattleStream(
+  prompt: string,
+  setup: ExperimentalSetup,
+  handlers: ArenaStreamHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  return streamSseRequest(
+    '/api/experimental-arena/battles/stream/',
+    toExperimentalStartPayload(prompt, setup),
+    {
+      signal,
+      onEvent: (event) => handlers.onEvent(event as Parameters<ArenaStreamHandlers['onEvent']>[0]),
+    },
+  )
+}
+
 export async function continueExperimentalBattle(
   battleId: string,
   prompt: string,
@@ -266,6 +284,22 @@ export async function continueExperimentalBattle(
   )
 
   return toArenaBattle(response)
+}
+
+export function continueExperimentalBattleStream(
+  battleId: string,
+  prompt: string,
+  handlers: ArenaStreamHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  return streamSseRequest(
+    `/api/arena/battles/${encodeURIComponent(battleId)}/turns/stream/`,
+    { prompt },
+    {
+      signal,
+      onEvent: (event) => handlers.onEvent(event as Parameters<ArenaStreamHandlers['onEvent']>[0]),
+    },
+  )
 }
 
 export async function getExperimentalBattleDetails(battleId: string): Promise<ArenaBattle> {

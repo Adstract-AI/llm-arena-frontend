@@ -6,6 +6,7 @@ import { Link, Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { env } from '../../../shared/config/env'
 import { getStoredReturnPath } from '../storage'
+import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
 
 function getConfigurationErrors(): string[] {
   const errors: string[] = []
@@ -52,7 +53,12 @@ export function LoginPage() {
             <p>Continue with a provider:</p>
           </div>
 
-          {error ? <p className="leaderboard-error">{error}</p> : null}
+          {error ? (
+            <FriendlyErrorToast
+              message="We could not start sign in."
+              detail={error}
+            />
+          ) : null}
 
           <div className="auth-card__actions auth-card__actions--stacked">
             <button
