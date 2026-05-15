@@ -4,6 +4,7 @@ import HighlightOffRoundedIcon from '@mui/icons-material/HighlightOffRounded'
 import WestRoundedIcon from '@mui/icons-material/WestRounded'
 import type { SvgIconComponent } from '@mui/icons-material'
 import type { VoteChoice } from '../types'
+import { useI18n } from '../../../shared/localisation/I18nContext'
 
 interface VotePanelProps {
   selectedVote: VoteChoice | null
@@ -14,32 +15,32 @@ interface VotePanelProps {
 
 const options: Array<{
   value: VoteChoice
-  label: string
-  helper: string
+  labelKey: 'voteModel1' | 'voteBothGood' | 'voteBothBad' | 'voteModel2'
+  helperKey: 'voteModel1Helper' | 'voteBothGoodHelper' | 'voteBothBadHelper' | 'voteModel2Helper'
   icon: SvgIconComponent
 }> = [
   {
     value: 'modelA',
-    label: 'Model 1',
-    helper: 'First model is better',
+    labelKey: 'voteModel1',
+    helperKey: 'voteModel1Helper',
     icon: WestRoundedIcon,
   },
   {
     value: 'bothGood',
-    label: 'Both are good',
-    helper: 'Both were strong',
+    labelKey: 'voteBothGood',
+    helperKey: 'voteBothGoodHelper',
     icon: DoneAllRoundedIcon,
   },
   {
     value: 'bothBad',
-    label: 'Neither is good',
-    helper: 'Both missed the mark',
+    labelKey: 'voteBothBad',
+    helperKey: 'voteBothBadHelper',
     icon: HighlightOffRoundedIcon,
   },
   {
     value: 'modelB',
-    label: 'Model 2',
-    helper: 'Second model is better',
+    labelKey: 'voteModel2',
+    helperKey: 'voteModel2Helper',
     icon: EastRoundedIcon,
   },
 ]
@@ -50,17 +51,19 @@ export function VotePanel({
   onSubmitVote,
   disabled,
 }: VotePanelProps) {
+  const { strings } = useI18n()
+
   return (
-    <section className="vote-panel" aria-label="Vote for best response">
+    <section className="vote-panel" aria-label={strings.arena.votePanelLabel}>
       <div className="vote-panel__header">
-        <h3>Choose the better response</h3>
+        <h3>{strings.arena.voteTitle}</h3>
         <button
           type="button"
           className="btn btn--primary vote-panel__submit"
           onClick={() => void onSubmitVote()}
           disabled={disabled || !selectedVote}
         >
-          Submit Vote
+          {strings.arena.submitVote}
         </button>
       </div>
 
@@ -75,9 +78,9 @@ export function VotePanel({
           >
             <span className="vote-btn__top">
               <option.icon aria-hidden="true" className="vote-btn__icon" />
-              <span>{option.label}</span>
+              <span>{strings.arena[option.labelKey]}</span>
             </span>
-            <small>{option.helper}</small>
+            <small>{strings.arena[option.helperKey]}</small>
           </button>
         ))}
       </div>

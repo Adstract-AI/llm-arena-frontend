@@ -388,6 +388,31 @@ input {
   transition: border-color 200ms ease, background-color 200ms ease;
 }
 
+.language-toggle {
+  border: 0;
+  border-radius: var(--radius-sm);
+  min-width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  background: var(--panel-bg-soft);
+  color: var(--text-main);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+.language-toggle:hover,
+.language-toggle:focus-visible {
+  color: var(--nav-active-text);
+  background: var(--nav-active-bg);
+  outline: none;
+}
+
 .theme-toggle__icon {
   font-size: 22px !important;
 }
