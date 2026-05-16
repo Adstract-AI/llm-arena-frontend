@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import DoneAllRoundedIcon from '@mui/icons-material/DoneAllRounded'
 import EastRoundedIcon from '@mui/icons-material/EastRounded'
 import HighlightOffRoundedIcon from '@mui/icons-material/HighlightOffRounded'
+import KeyboardArrowDownRoundedIcon from '@mui/icons-material/KeyboardArrowDownRounded'
+import KeyboardArrowUpRoundedIcon from '@mui/icons-material/KeyboardArrowUpRounded'
 import WestRoundedIcon from '@mui/icons-material/WestRounded'
 import type { SvgIconComponent } from '@mui/icons-material'
 import type { VoteChoice } from '../types'
@@ -52,11 +55,46 @@ export function VotePanel({
   disabled,
 }: VotePanelProps) {
   const { strings } = useI18n()
+  const [isCollapsed, setIsCollapsed] = useState(false)
+  const selectedOption = options.find((option) => option.value === selectedVote)
 
   return (
-    <section className="vote-panel" aria-label={strings.arena.votePanelLabel}>
+    <section
+      className={isCollapsed ? 'vote-panel vote-panel--collapsed' : 'vote-panel'}
+      aria-label={strings.arena.votePanelLabel}
+    >
       <div className="vote-panel__header">
-        <h3>{strings.arena.voteTitle}</h3>
+        <div className="vote-panel__title-group">
+          <h3>{strings.arena.voteTitle}</h3>
+          {selectedOption ? (
+            <p className="vote-panel__selection">
+              {strings.arena[selectedOption.labelKey]}
+            </p>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          className="vote-panel__collapse"
+          aria-expanded={!isCollapsed}
+          aria-controls="vote-panel-options"
+          aria-label={
+            isCollapsed
+              ? strings.arena.expandVotePanel
+              : strings.arena.collapseVotePanel
+          }
+          title={
+            isCollapsed
+              ? strings.arena.expandVotePanel
+              : strings.arena.collapseVotePanel
+          }
+          onClick={() => setIsCollapsed((current) => !current)}
+        >
+          {isCollapsed ? (
+            <KeyboardArrowUpRoundedIcon aria-hidden="true" />
+          ) : (
+            <KeyboardArrowDownRoundedIcon aria-hidden="true" />
+          )}
+        </button>
         <button
           type="button"
           className="btn btn--primary vote-panel__submit"
@@ -67,7 +105,7 @@ export function VotePanel({
         </button>
       </div>
 
-      <div className="vote-panel__grid">
+      <div className="vote-panel__grid" id="vote-panel-options">
         {options.map((option) => (
           <button
             key={option.value}

@@ -373,6 +373,33 @@ export function LeaderboardPage() {
               </tbody>
             </table>
           </div>
+          <div className="leaderboard-mobile-list" aria-label={strings.leaderboard.tableAria}>
+            {sortedModels.map((model, index) => (
+              <Link
+                key={model.id}
+                to={`/models/${encodeURIComponent(model.name)}`}
+                className={`leaderboard-mobile-card rank-${Math.min(index + 1, 3)}`}
+              >
+                <div className="leaderboard-mobile-card__top">
+                  <span className={`rank-number ${index + 1 <= 3 ? 'top-rank' : ''}`}>
+                    #{index + 1}
+                  </span>
+                  <span className="leaderboard-mobile-card__identity">
+                    <strong>{model.name}</strong>
+                    <span>{model.providerDisplayName}</span>
+                  </span>
+                </div>
+                <dl className="leaderboard-mobile-card__metrics">
+                  {numericColumns.map((column) => (
+                    <div key={column.key} className="leaderboard-mobile-card__metric">
+                      <dt>{column.label}</dt>
+                      <dd>{column.render(model)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Link>
+            ))}
+          </div>
           </>
         ) : !isLoading && !error && models.length === 0 ? (
           <p className="leaderboard-note">{strings.leaderboard.noModels}</p>
