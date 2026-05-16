@@ -23,6 +23,7 @@ import {
 import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
 import { env } from '../../../shared/config/env'
 import { isRateLimitError } from '../../../shared/network/rateLimit'
+import { useI18n } from '../../../shared/localisation/I18nContext'
 
 const ARENA_SESSION_STORAGE_KEY = 'makarena-arena-session-v1'
 
@@ -83,6 +84,7 @@ function readArenaSessionSnapshot(): ArenaSessionSnapshot | null {
 }
 
 export function ArenaPage() {
+  const { strings } = useI18n()
   const savedSession = useMemo(readArenaSessionSnapshot, [])
   const [battle, setBattle] = useState<ArenaBattle | null>(savedSession?.battle ?? null)
   const [voteOutcome, setVoteOutcome] = useState<VoteOutcome | null>(
@@ -265,7 +267,7 @@ export function ArenaPage() {
                               ...current.slotErrors,
                               [slot]:
                                 getPayloadText(data, 'error') ||
-                                'This model could not finish its response.',
+                                strings.arena.couldNotProcessPrompt,
                             },
                           }
                         : current,
@@ -275,7 +277,7 @@ export function ArenaPage() {
 
                   if (event === 'battle_failed') {
                     throw new Error(
-                      getPayloadText(data, 'error') || 'The battle could not be generated.',
+                      getPayloadText(data, 'error') || strings.arena.couldNotProcessPrompt,
                     )
                   }
 
@@ -373,7 +375,7 @@ export function ArenaPage() {
                               ...current.slotErrors,
                               [slot]:
                                 getPayloadText(data, 'error') ||
-                                'This model could not finish its response.',
+                                strings.arena.couldNotProcessPrompt,
                             },
                           }
                         : current,
@@ -383,7 +385,7 @@ export function ArenaPage() {
 
                   if (event === 'battle_failed') {
                     throw new Error(
-                      getPayloadText(data, 'error') || 'The battle could not be generated.',
+                      getPayloadText(data, 'error') || strings.arena.couldNotProcessPrompt,
                     )
                   }
 
@@ -418,7 +420,7 @@ export function ArenaPage() {
       setError(
         submissionError instanceof Error
           ? submissionError.message
-          : 'Could not process your prompt.',
+          : strings.arena.couldNotProcessPrompt,
       )
     } finally {
       streamAbortRef.current = null
@@ -443,7 +445,7 @@ export function ArenaPage() {
       setError(
         voteError instanceof Error
           ? voteError.message
-          : 'Could not submit your vote.',
+          : strings.arena.couldNotSubmitVote,
       )
     } finally {
       setIsVoting(false)
@@ -486,7 +488,7 @@ export function ArenaPage() {
         </article>
 
         <article className="chat-message chat-message--assistant chat-message--duel">
-          <p className="chat-message__role">Responses</p>
+          <p className="chat-message__role">{strings.arena.responses}</p>
           <ResponsePair
             round={turn}
             selectedVote={isVotingTurn ? selectedVote : null}
@@ -518,7 +520,7 @@ export function ArenaPage() {
           ref={scrollToNewResponse}
           className="chat-message chat-message--assistant chat-message--duel"
         >
-          <p className="chat-message__role">Responses</p>
+          <p className="chat-message__role">{strings.arena.responses}</p>
           <ResponsePair
             round={currentStreamingTurn.turn}
             selectedVote={null}
@@ -538,23 +540,20 @@ export function ArenaPage() {
     <section className={arenaClassName}>
       {!turns.length && !pendingPrompt && !streamingTurn ? (
         <div className="page-card page-card--helper">
-          <p className="eyebrow">Model Arena</p>
-          <h2>Put two anonymous models head-to-head.</h2>
-          <p>
-            Submit prompts, compare both responses, then vote. Model identities
-            unlock after voting.
-          </p>
-          <div className="arena-note" aria-label="Model disclaimer">
-            <strong>Keep in mind:</strong>
-            <span>Responses may be slow, inaccurate, or hallucinated.</span>
-            <span>Always double-check important facts before relying on them.</span>
+          <p className="eyebrow">{strings.arena.eyebrow}</p>
+          <h2>{strings.arena.introTitle}</h2>
+          <p>{strings.arena.introBody}</p>
+          <div className="arena-note" aria-label={strings.arena.disclaimerLabel}>
+            <strong>{strings.arena.disclaimerTitle}</strong>
+            <span>{strings.arena.disclaimerLine1}</span>
+            <span>{strings.arena.disclaimerLine2}</span>
           </div>
         </div>
       ) : null}
 
       {error ? (
         <FriendlyErrorToast
-          message="There was a problem with the arena."
+          message={strings.arena.couldNotProcessPrompt}
           detail={error}
         />
       ) : null}
@@ -574,7 +573,7 @@ export function ArenaPage() {
               className="chat-message chat-message--assistant chat-message--loading"
             >
               <p className="chat-message__role">MakArena</p>
-              <div className="typing-indicator" aria-label="Generating answers">
+              <div className="typing-indicator" aria-label={strings.arena.generatingAnswers}>
                 <span />
                 <span />
                 <span />
@@ -608,7 +607,7 @@ export function ArenaPage() {
       {battle && voteOutcome ? (
         <section className="result-card" aria-live="polite">
           <div className="result-card__top">
-            <p className="result-card__kicker">Vote submitted</p>
+            <p className="result-card__kicker">{strings.arena.voteSubmitted}</p>
             <button
               type="button"
               className="btn btn--ghost result-card__new-chat"
@@ -618,14 +617,14 @@ export function ArenaPage() {
                 aria-hidden="true"
                 className="result-card__new-chat-icon"
               />
-              Start New Chat
+              {strings.arena.startNewChat}
             </button>
           </div>
-          <h3>Thanks, your vote has been counted.</h3>
+          <h3>{strings.arena.thanksVote}</h3>
 
           <div className="result-card__grid">
             <article className="result-chip">
-              <span className="result-chip__label">Model 1</span>
+              <span className="result-chip__label">{strings.arena.voteModel1}</span>
               <strong>
                 <a
                   className="result-chip__model-link"
@@ -637,7 +636,7 @@ export function ArenaPage() {
               </strong>
             </article>
             <article className="result-chip result-chip--winner">
-              <span className="result-chip__label">Winning model</span>
+              <span className="result-chip__label">{strings.arena.winningModel}</span>
               <strong>
                 {voteOutcome.winner === 'tie' || !winnerLabel ? (
                   winnerLabel
@@ -653,7 +652,7 @@ export function ArenaPage() {
               </strong>
             </article>
             <article className="result-chip">
-              <span className="result-chip__label">Model 2</span>
+              <span className="result-chip__label">{strings.arena.voteModel2}</span>
               <strong>
                 <a
                   className="result-chip__model-link"

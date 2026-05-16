@@ -7,16 +7,17 @@ import { useAuth } from '../context/AuthContext'
 import { env } from '../../../shared/config/env'
 import { getStoredReturnPath } from '../storage'
 import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
+import { useI18n } from '../../../shared/localisation/I18nContext'
 
-function getConfigurationErrors(): string[] {
+function getConfigurationErrors(strings: ReturnType<typeof useI18n>['strings']): string[] {
   const errors: string[] = []
 
   if (!env.githubClientId) {
-    errors.push('GitHub OAuth client ID is missing.')
+    errors.push(strings.auth.githubConfigError)
   }
 
   if (!env.googleClientId) {
-    errors.push('Google OAuth client ID is missing.')
+    errors.push(strings.auth.googleConfigError)
   }
 
   return errors
@@ -24,9 +25,10 @@ function getConfigurationErrors(): string[] {
 
 export function LoginPage() {
   const location = useLocation()
+  const { strings } = useI18n()
   const { isAuthenticated, isInitializing, login } = useAuth()
   const [error, setError] = useState<string | null>(null)
-  const configErrors = useMemo(getConfigurationErrors, [])
+  const configErrors = useMemo(() => getConfigurationErrors(strings), [strings])
   const nextPath = useMemo(
     () => new URLSearchParams(location.search).get('next') ?? getStoredReturnPath() ?? '/',
     [location.search],
@@ -48,14 +50,14 @@ export function LoginPage() {
         <div className="auth-login-shell__glow" aria-hidden="true" />
         <section className="auth-card auth-card--login">
           <div className="auth-card__header auth-card__header--compact">
-            <p className="eyebrow">Sign In</p>
-            <h1>Sign in to access all the features</h1>
-            <p>Continue with a provider:</p>
+            <p className="eyebrow">{strings.auth.signIn}</p>
+            <h1>{strings.auth.signInTitle}</h1>
+            <p>{strings.auth.continueWithProvider}</p>
           </div>
 
           {error ? (
             <FriendlyErrorToast
-              message="We could not start sign in."
+              message={strings.auth.callbackFailed}
               detail={error}
             />
           ) : null}
@@ -69,7 +71,7 @@ export function LoginPage() {
             >
               <span className="auth-provider-btn__brand">
                 <GitHubIcon aria-hidden="true" className="auth-provider-btn__icon" />
-                <span>Continue with GitHub</span>
+                <span>{strings.auth.continueWithGithub}</span>
               </span>
               <ArrowOutwardRoundedIcon
                 aria-hidden="true"
@@ -85,7 +87,7 @@ export function LoginPage() {
             >
               <span className="auth-provider-btn__brand">
                 <GoogleIcon aria-hidden="true" className="auth-provider-btn__icon" />
-                <span>Continue with Google</span>
+                <span>{strings.auth.continueWithGoogle}</span>
               </span>
               <ArrowOutwardRoundedIcon
                 aria-hidden="true"
@@ -95,13 +97,13 @@ export function LoginPage() {
           </div>
 
           <p className="auth-card__disclaimer">
-            By signing in, you agree to the{' '}
+            {strings.auth.disclaimerStart}{' '}
             <Link to="/terms" className="auth-card__disclaimer-link">
-              Terms of Service
+              {strings.legal.termsOfService}
             </Link>{' '}
-            and{' '}
+            {strings.auth.disclaimerMiddle}{' '}
             <Link to="/privacy" className="auth-card__disclaimer-link">
-              Privacy Policy
+              {strings.legal.privacyPolicy}
             </Link>
             .
           </p>

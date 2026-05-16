@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getLeaderboard } from '../api/leaderboardApi'
 import type { LeaderboardModel } from '../types'
 import { FriendlyErrorToast } from '../../../shared/components/FriendlyErrorToast'
+import { useI18n } from '../../../shared/localisation/I18nContext'
 
 type NumericSortKey =
   | 'eloScore'
@@ -33,6 +34,8 @@ interface NumericColumn {
   render: (model: LeaderboardModel) => ReactNode
 }
 
+type LeaderboardStrings = ReturnType<typeof useI18n>['strings']['leaderboard']
+
 function formatNullableMetric(value: number | null, digits = 2): string {
   if (value === null) {
     return digits === 0 ? '0' : (0).toFixed(digits)
@@ -41,17 +44,18 @@ function formatNullableMetric(value: number | null, digits = 2): string {
   return value.toFixed(digits)
 }
 
-const defaultColumns: NumericColumn[] = [
+function createDefaultColumns(strings: LeaderboardStrings): NumericColumn[] {
+  return [
   {
     key: 'eloScore',
-    label: 'ELO',
-    sortLabel: 'ELO',
+    label: strings.elo,
+    sortLabel: strings.elo,
     render: (model) => <span className="score-badge">{model.eloScore.toFixed(2)}</span>,
   },
   {
     key: 'nonTieWinRate',
-    label: 'Win Rate',
-    sortLabel: 'Win Rate',
+    label: strings.winRate,
+    sortLabel: strings.winRate,
     render: (model) => (
       <div className="winrate-meter">
         <span className="winrate-meter__value">
@@ -70,85 +74,79 @@ const defaultColumns: NumericColumn[] = [
   },
   {
     key: 'matches',
-    label: 'Matches',
-    sortLabel: 'Matches',
+    label: strings.matches,
+    sortLabel: strings.matches,
     render: (model) => model.matches.toLocaleString(),
   },
   {
     key: 'wins',
-    label: 'Wins',
-    sortLabel: 'Wins',
+    label: strings.wins,
+    sortLabel: strings.wins,
     render: (model) => model.wins.toLocaleString(),
   },
   {
     key: 'losses',
-    label: 'Losses',
-    sortLabel: 'Losses',
+    label: strings.losses,
+    sortLabel: strings.losses,
     render: (model) => model.losses.toLocaleString(),
   },
   {
     key: 'ties',
-    label: 'Ties',
-    sortLabel: 'Ties',
+    label: strings.ties,
+    sortLabel: strings.ties,
     render: (model) => model.ties.toLocaleString(),
   },
 ]
+}
 
-const experimentalColumns: NumericColumn[] = [
+function createExperimentalColumns(strings: LeaderboardStrings): NumericColumn[] {
+  return [
   {
     key: 'eloScore',
-    label: 'ELO',
-    sortLabel: 'ELO',
+    label: strings.elo,
+    sortLabel: strings.elo,
     render: (model) => <span className="score-badge">{model.eloScore.toFixed(2)}</span>,
   },
   {
     key: 'avgWinningTemp',
-    label: 'Avg Temp',
-    sortLabel: 'Avg Temp',
-    tooltip: 'Average winning temperature',
+    label: strings.avgTemp,
+    sortLabel: strings.avgTemp,
+    tooltip: strings.avgWinningTemperature,
     render: (model) => formatNullableMetric(model.avgWinningTemp),
   },
   {
     key: 'avgWinningTopP',
-    label: 'Avg Top-p',
-    sortLabel: 'Avg Top-p',
-    tooltip: 'Average winning top-p',
+    label: strings.avgTopP,
+    sortLabel: strings.avgTopP,
+    tooltip: strings.avgWinningTopP,
     render: (model) => formatNullableMetric(model.avgWinningTopP),
   },
   {
     key: 'avgWinningTopK',
-    label: 'Avg Top-k',
-    sortLabel: 'Avg Top-k',
-    tooltip: 'Average winning top-k',
+    label: strings.avgTopK,
+    sortLabel: strings.avgTopK,
+    tooltip: strings.avgWinningTopK,
     render: (model) => formatNullableMetric(model.avgWinningTopK, 0),
   },
   {
     key: 'avgWinningFreqPenalty',
-    label: (
-      <span className="th-sort-btn__label-stack">
-        <span>Avg Freq</span>
-        <span>Penalty</span>
-      </span>
-    ),
-    sortLabel: 'Avg Freq Penalty',
-    tooltip: 'Average winning frequency penalty',
+    label: strings.avgFreqPenalty,
+    sortLabel: strings.avgFreqPenalty,
+    tooltip: strings.avgWinningFreqPenalty,
     render: (model) => formatNullableMetric(model.avgWinningFreqPenalty),
   },
   {
     key: 'avgWinningPresPenalty',
-    label: (
-      <span className="th-sort-btn__label-stack">
-        <span>Avg Pres</span>
-        <span>Penalty</span>
-      </span>
-    ),
-    sortLabel: 'Avg Pres Penalty',
-    tooltip: 'Average winning presence penalty',
+    label: strings.avgPresPenalty,
+    sortLabel: strings.avgPresPenalty,
+    tooltip: strings.avgWinningPresPenalty,
     render: (model) => formatNullableMetric(model.avgWinningPresPenalty),
   },
 ]
+}
 
 export function LeaderboardPage() {
+  const { strings } = useI18n()
   const navigate = useNavigate()
   const [models, setModels] = useState<LeaderboardModel[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -156,7 +154,13 @@ export function LeaderboardPage() {
   const [sort, setSort] = useState<SortState>({ key: 'eloScore', direction: 'desc' })
   const [showExperimentalMetrics, setShowExperimentalMetrics] = useState(false)
 
-  const numericColumns = showExperimentalMetrics ? experimentalColumns : defaultColumns
+  const numericColumns = useMemo(
+    () =>
+      showExperimentalMetrics
+        ? createExperimentalColumns(strings.leaderboard)
+        : createDefaultColumns(strings.leaderboard),
+    [showExperimentalMetrics, strings.leaderboard],
+  )
 
   const sortedModels = useMemo(() => {
     return [...models].sort((a, b) => {
@@ -209,7 +213,7 @@ export function LeaderboardPage() {
           setError(
             error instanceof Error
               ? error.message
-              : 'Could not load leaderboard right now.',
+              : strings.leaderboard.couldNotLoad,
           )
         }
       } finally {
@@ -224,27 +228,27 @@ export function LeaderboardPage() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [strings.leaderboard.couldNotLoad])
 
   return (
     <section className="leaderboard leaderboard--wide">
       <div className="leaderboard-shell">
         <div className="page-card page-card--helper">
-          <p className="eyebrow">Leaderboard</p>
-          <h2>Model ranking by community votes.</h2>
+          <p className="eyebrow">{strings.leaderboard.eyebrow}</p>
+          <h2>{strings.leaderboard.title}</h2>
         </div>
 
         <div className="leaderboard-card">
         {isLoading ? (
           <div className="leaderboard-loading">
             <div className="leaderboard-spinner"></div>
-            <p className="leaderboard-note">Loading leaderboard...</p>
+            <p className="leaderboard-note">{strings.leaderboard.loading}</p>
           </div>
         ) : null}
 
         {error ? (
           <FriendlyErrorToast
-            message="We could not load the leaderboard."
+            message={strings.leaderboard.couldNotLoad}
             detail={error}
           />
         ) : null}
@@ -262,20 +266,20 @@ export function LeaderboardPage() {
               onClick={() => setShowExperimentalMetrics((previous) => !previous)}
               aria-label={
                 showExperimentalMetrics
-                  ? 'Show standard leaderboard metrics'
-                  : 'Show experimental leaderboard metrics'
+                  ? strings.leaderboard.showStandardMetrics
+                  : strings.leaderboard.showExperimentalMetrics
               }
               title={
                 showExperimentalMetrics
-                  ? 'Show standard leaderboard metrics'
-                  : 'Show experimental leaderboard metrics'
+                  ? strings.leaderboard.showStandardMetrics
+                  : strings.leaderboard.showExperimentalMetrics
               }
             >
               <SwapVertRoundedIcon fontSize="inherit" />
             </button>
           </div>
           <div className="leaderboard-table-wrap">
-            <table className="leaderboard-table" aria-label="Model leaderboard">
+            <table className="leaderboard-table" aria-label={strings.leaderboard.tableAria}>
               <colgroup>
                 <col className="rank-col" />
                 <col className="model-col" />
@@ -288,8 +292,8 @@ export function LeaderboardPage() {
               </colgroup>
               <thead>
                 <tr>
-                  <th className="rank-col">Rank</th>
-                  <th className="model-col">Model</th>
+                  <th className="rank-col">{strings.leaderboard.rank}</th>
+                  <th className="model-col">{strings.leaderboard.model}</th>
                   {numericColumns.map((column) => {
                     const active = sort.key === column.key
                     const directionMarker = active ? (sort.direction === 'desc' ? '↓' : '↑') : ''
@@ -299,7 +303,7 @@ export function LeaderboardPage() {
                           type="button"
                           className={active ? 'th-sort-btn th-sort-btn--active' : 'th-sort-btn'}
                           onClick={() => toggleNumericSort(column.key)}
-                          aria-label={`Sort by ${column.sortLabel}`}
+                          aria-label={strings.leaderboard.sortBy(column.sortLabel)}
                         >
                           <span className="th-sort-btn__label">
                             {column.label}
@@ -369,9 +373,36 @@ export function LeaderboardPage() {
               </tbody>
             </table>
           </div>
+          <div className="leaderboard-mobile-list" aria-label={strings.leaderboard.tableAria}>
+            {sortedModels.map((model, index) => (
+              <Link
+                key={model.id}
+                to={`/models/${encodeURIComponent(model.name)}`}
+                className={`leaderboard-mobile-card rank-${Math.min(index + 1, 3)}`}
+              >
+                <div className="leaderboard-mobile-card__top">
+                  <span className={`rank-number ${index + 1 <= 3 ? 'top-rank' : ''}`}>
+                    #{index + 1}
+                  </span>
+                  <span className="leaderboard-mobile-card__identity">
+                    <strong>{model.name}</strong>
+                    <span>{model.providerDisplayName}</span>
+                  </span>
+                </div>
+                <dl className="leaderboard-mobile-card__metrics">
+                  {numericColumns.map((column) => (
+                    <div key={column.key} className="leaderboard-mobile-card__metric">
+                      <dt>{column.label}</dt>
+                      <dd>{column.render(model)}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </Link>
+            ))}
+          </div>
           </>
         ) : !isLoading && !error && models.length === 0 ? (
-          <p className="leaderboard-note">No models in leaderboard yet.</p>
+          <p className="leaderboard-note">{strings.leaderboard.noModels}</p>
         ) : null}
         </div>
       </div>
