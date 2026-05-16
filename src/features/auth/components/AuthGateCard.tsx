@@ -1,6 +1,7 @@
 import LoginRoundedIcon from '@mui/icons-material/LoginRounded'
 import type { ReactNode } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useI18n } from '../../../shared/localisation/I18nContext'
 
 interface AuthGateCardProps {
   title: string
@@ -10,10 +11,11 @@ interface AuthGateCardProps {
 
 export function AuthGateCard({ title, description, returnPath }: AuthGateCardProps) {
   const { openLoginPage } = useAuth()
+  const { strings } = useI18n()
 
   return (
     <section className="auth-gate-card">
-      <p className="eyebrow">Login required</p>
+      <p className="eyebrow">{strings.auth.gateEyebrow}</p>
       <h2>{title}</h2>
       <p>{description}</p>
       <button
@@ -22,7 +24,7 @@ export function AuthGateCard({ title, description, returnPath }: AuthGateCardPro
         onClick={() => openLoginPage(returnPath)}
       >
         <LoginRoundedIcon aria-hidden="true" className="auth-gate-card__icon" />
-        Login
+        {strings.auth.gateAction}
       </button>
     </section>
   )

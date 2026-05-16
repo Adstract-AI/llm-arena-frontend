@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import SendRoundedIcon from '@mui/icons-material/SendRounded'
+import { useI18n } from '../../../shared/localisation/I18nContext'
 
 interface PromptInputProps {
   onSubmit: (prompt: string) => Promise<void>
@@ -12,9 +13,11 @@ export function PromptInput({
   onSubmit,
   loading,
   disabled = false,
-  placeholder = 'Ask to compare models...',
+  placeholder,
 }: PromptInputProps) {
+  const { strings } = useI18n()
   const [value, setValue] = useState('')
+  const resolvedPlaceholder = placeholder ?? strings.arena.promptPlaceholder
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -31,7 +34,7 @@ export function PromptInput({
   return (
     <form className="prompt-form" onSubmit={handleSubmit}>
       <label htmlFor="arena-prompt" className="sr-only">
-        Your question
+        {strings.arena.promptLabel}
       </label>
 
       <div className="chat-composer">
@@ -40,7 +43,7 @@ export function PromptInput({
           className="chat-composer__input"
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           disabled={loading || disabled}
         />
 
@@ -48,8 +51,8 @@ export function PromptInput({
           type="submit"
           className="chat-composer__send"
           disabled={loading || disabled || !value.trim()}
-          aria-label={loading ? 'Generating responses' : 'Send prompt'}
-          title={loading ? 'Generating responses' : 'Send prompt'}
+          aria-label={loading ? strings.arena.generatingAnswers : strings.arena.sendPrompt}
+          title={loading ? strings.arena.generatingAnswers : strings.arena.sendPrompt}
         >
           <SendRoundedIcon aria-hidden="true" className="chat-composer__send-icon" />
         </button>

@@ -1,6 +1,7 @@
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { ArenaTurn, VoteChoice } from '../types'
+import { useI18n } from '../../../shared/localisation/I18nContext'
 
 interface ResponsePairProps {
   round: ArenaTurn
@@ -47,6 +48,7 @@ export function ResponsePair({
   answerAError = null,
   answerBError = null,
 }: ResponsePairProps) {
+  const { strings } = useI18n()
   const canSelect = Boolean(onSelectVote) && !disabled
   const cardAClassName =
     selectedVote === 'modelA'
@@ -67,7 +69,7 @@ export function ResponsePair({
   }
 
   function renderCard(
-    label: 'Model 1' | 'Model 2',
+    label: string,
     vote: 'modelA' | 'modelB',
     responseText: string,
     modelName: string | undefined,
@@ -99,12 +101,12 @@ export function ResponsePair({
           onClick={canSelect ? () => handleCardSelect(vote) : undefined}
           aria-disabled={!canSelect}
           tabIndex={canSelect ? 0 : -1}
-          aria-label={`Select ${label.toLowerCase()}`}
+          aria-label={vote === 'modelA' ? strings.arena.selectModel1 : strings.arena.selectModel2}
         >
           <div className="response-card__content">
             {responseText ? renderMarkdown(responseText) : null}
             {isStreaming ? (
-              <div className="response-card__stream-status" aria-label={`${label} is generating`}>
+              <div className="response-card__stream-status" aria-label={strings.arena.generatingAnswers}>
                 <span />
                 <span />
                 <span />
@@ -122,7 +124,7 @@ export function ResponsePair({
   return (
     <section className="duel-grid" aria-live="polite">
       {renderCard(
-        'Model 1',
+        strings.arena.voteModel1,
         'modelA',
         round.answerA,
         revealedModels?.answer1Model,
@@ -131,7 +133,7 @@ export function ResponsePair({
         cardAClassName,
       )}
       {renderCard(
-        'Model 2',
+        strings.arena.voteModel2,
         'modelB',
         round.answerB,
         revealedModels?.answer2Model,
